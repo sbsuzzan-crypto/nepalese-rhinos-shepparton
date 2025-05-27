@@ -29,6 +29,8 @@ import AnnouncementsManagement from "./pages/admin/AnnouncementsManagement";
 import EventsManagement from "./pages/admin/EventsManagement";
 import TeamsManagement from "./pages/admin/TeamsManagement";
 import JoinSubmissionsManagement from "./pages/admin/JoinSubmissionsManagement";
+import ContactSubmissionsManagement from "./pages/admin/ContactSubmissionsManagement";
+import DocumentsManagement from "./pages/admin/DocumentsManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -75,6 +77,8 @@ const App = () => (
               <Route path="sponsors" element={<SponsorsManagement />} />
               <Route path="messages" element={<MessagesManagement />} />
               <Route path="join-submissions" element={<JoinSubmissionsManagement />} />
+              <Route path="contact-submissions" element={<ContactSubmissionsManagement />} />
+              <Route path="documents" element={<DocumentsManagement />} />
               <Route 
                 path="staff" 
                 element={
