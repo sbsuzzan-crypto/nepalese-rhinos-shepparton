@@ -17,7 +17,9 @@ import {
   LogOut,
   Settings,
   UserCheck,
-  Shield
+  Shield,
+  Bell,
+  Activity
 } from 'lucide-react';
 
 const AdminLayout = () => {
@@ -28,10 +30,13 @@ const AdminLayout = () => {
   // Show loading state while checking authentication
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rhino-red mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading admin panel...</p>
+          <div className="w-16 h-16 bg-gradient-to-br from-rhino-red to-red-700 rounded-2xl flex items-center justify-center mx-auto mb-4 animate-pulse">
+            <Shield className="w-8 h-8 text-white" />
+          </div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-rhino-red mx-auto mb-4"></div>
+          <p className="text-slate-600 font-medium">Loading admin panel...</p>
         </div>
       </div>
     );
@@ -45,33 +50,40 @@ const AdminLayout = () => {
   // Show approval pending message if user is not approved
   if (!profile?.is_approved) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center border border-slate-200">
           <div className="mb-6">
-            <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Settings className="w-8 h-8 text-yellow-600" />
+            <div className="w-20 h-20 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+              <Settings className="w-10 h-10 text-white" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Account Pending Approval</h2>
-            <p className="text-gray-600">
+            <h2 className="text-2xl font-bold text-slate-900 mb-3">Account Pending Approval</h2>
+            <p className="text-slate-600 leading-relaxed">
               Your account has been created successfully, but it needs to be approved by an administrator before you can access the admin panel.
             </p>
           </div>
           <div className="space-y-4">
-            <div className="bg-gray-50 rounded-lg p-4">
-              <p className="text-sm text-gray-700">
-                <strong>Email:</strong> {user.email}
-              </p>
-              <p className="text-sm text-gray-700">
-                <strong>Role:</strong> {profile?.role || 'Pending'}
-              </p>
-              <p className="text-sm text-gray-700">
-                <strong>Status:</strong> <span className="text-yellow-600">Pending Approval</span>
-              </p>
+            <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-slate-600">Email:</span>
+                  <span className="font-medium text-slate-900">{user.email}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-600">Role:</span>
+                  <span className="font-medium text-slate-900">{profile?.role || 'Pending'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-600">Status:</span>
+                  <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+                    Pending Approval
+                  </Badge>
+                </div>
+              </div>
             </div>
             <Button 
-              onClick={() => signOut()} 
+              onClick={signOut} 
               variant="outline" 
-              className="w-full"
+              className="w-full hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors"
             >
               <LogOut className="w-4 h-4 mr-2" />
               Sign Out
@@ -145,11 +157,21 @@ const AdminLayout = () => {
     );
   }
 
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+      // Force redirect even if there's an error
+      window.location.href = '/auth';
+    }
+  };
+
   const Sidebar = ({ className = '' }: { className?: string }) => (
     <div className={`flex flex-col h-full ${className}`}>
       <div className="flex items-center gap-3 p-6 border-b bg-gradient-to-r from-rhino-red to-red-700">
-        <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-md">
-          <span className="text-rhino-red font-bold text-lg">NR</span>
+        <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-lg">
+          <span className="text-rhino-red font-bold text-xl">NR</span>
         </div>
         <div className="text-white">
           <h2 className="font-bold text-lg">Nepalese Rhinos</h2>
@@ -164,16 +186,16 @@ const AdminLayout = () => {
               <Link
                 to={item.href}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group ${
                   item.current
-                    ? 'bg-rhino-red text-white shadow-md'
-                    : 'text-gray-700 hover:bg-gray-100 hover:text-rhino-red'
+                    ? 'bg-gradient-to-r from-rhino-red to-red-700 text-white shadow-lg scale-105'
+                    : 'text-slate-700 hover:bg-slate-100 hover:text-rhino-red hover:scale-105'
                 }`}
               >
-                <item.icon className="w-5 h-5" />
+                <item.icon className={`w-5 h-5 ${item.current ? 'text-white' : 'text-slate-400 group-hover:text-rhino-red'}`} />
                 {item.name}
                 {item.name === 'Users' && isAdmin && (
-                  <Badge variant="secondary" className="ml-auto text-xs">
+                  <Badge variant="secondary" className="ml-auto text-xs bg-blue-100 text-blue-800">
                     Admin
                   </Badge>
                 )}
@@ -183,16 +205,16 @@ const AdminLayout = () => {
         </ul>
       </nav>
 
-      <div className="p-4 border-t bg-gray-50">
-        <div className="flex items-center gap-3 mb-4 p-3 bg-white rounded-lg shadow-sm">
-          <div className="w-10 h-10 bg-gradient-to-br from-rhino-red to-red-700 rounded-full flex items-center justify-center">
-            <Users className="w-5 h-5 text-white" />
+      <div className="p-4 border-t bg-slate-50">
+        <div className="flex items-center gap-3 mb-4 p-3 bg-white rounded-xl shadow-sm border border-slate-200">
+          <div className="w-12 h-12 bg-gradient-to-br from-rhino-red to-red-700 rounded-xl flex items-center justify-center">
+            <Users className="w-6 h-6 text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-medium text-sm text-gray-900 truncate">
+            <p className="font-medium text-sm text-slate-900 truncate">
               {profile?.full_name || user.email}
             </p>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 mt-1">
               <Badge 
                 variant={profile?.role === 'admin' ? 'destructive' : 'secondary'} 
                 className="text-xs"
@@ -201,7 +223,7 @@ const AdminLayout = () => {
                 {profile?.role}
               </Badge>
               {isAdmin && (
-                <Badge className="text-xs bg-green-600">
+                <Badge className="text-xs bg-green-600 hover:bg-green-700">
                   Super Admin
                 </Badge>
               )}
@@ -209,10 +231,10 @@ const AdminLayout = () => {
           </div>
         </div>
         <Button
-          onClick={() => signOut()}
+          onClick={handleSignOut}
           variant="outline"
           size="sm"
-          className="w-full hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+          className="w-full hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all duration-200"
         >
           <LogOut className="w-4 h-4 mr-2" />
           Sign Out
@@ -222,14 +244,14 @@ const AdminLayout = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-50">
       {/* Mobile sidebar */}
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
         <SheetTrigger asChild>
           <Button
             variant="outline"
             size="icon"
-            className="fixed top-4 left-4 z-50 lg:hidden bg-white shadow-md hover:bg-gray-50"
+            className="fixed top-4 left-4 z-50 lg:hidden bg-white shadow-lg hover:bg-slate-50 border-slate-200"
           >
             <Menu className="h-4 w-4" />
           </Button>
@@ -241,14 +263,14 @@ const AdminLayout = () => {
 
       {/* Desktop sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-80 lg:flex-col">
-        <div className="flex flex-col bg-white border-r border-gray-200 h-full shadow-lg">
+        <div className="flex flex-col bg-white border-r border-slate-200 h-full shadow-xl">
           <Sidebar />
         </div>
       </div>
 
       {/* Main content */}
       <div className="lg:pl-80">
-        <main className="py-6">
+        <main className="py-8">
           <div className="px-4 sm:px-6 lg:px-8">
             <Outlet />
           </div>

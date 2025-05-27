@@ -8,8 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
   Table, 
   TableBody, 
@@ -18,6 +16,15 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/table';
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -29,25 +36,26 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Users, Plus, Edit, Trash2, UserCheck, UserX } from 'lucide-react';
+import { Users, Plus, Edit, Trash2, Mail, Phone, Building } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
-import FileUpload from '@/components/admin/FileUpload';
-import type { Database } from '@/integrations/supabase/types';
 
-type Staff = Database['public']['Tables']['staff']['Row'];
+interface StaffMember {
+  id: string;
+  name: string;
+  position: string;
+  email: string;
+  phone?: string;
+  bio?: string;
+  image_url?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
 
 const StaffManagement = () => {
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    role: '',
-    bio: '',
-    photo_url: '',
-    is_active: true,
-  });
-
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -60,42 +68,46 @@ const StaffManagement = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as Staff[];
+      return data as StaffMember[];
     },
   });
 
-  const createStaffMutation = useMutation({
-    mutationFn: async (data: typeof formData) => {
+  const addStaffMutation = useMutation({
+    mutationFn: async (staffData: Omit<StaffMember, 'id' | 'created_at' | 'updated_at'>) => {
       const { error } = await supabase
         .from('staff')
-        .insert([data]);
+        .insert([staffData]);
+
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['staff'] });
+      setIsDialogOpen(false);
+      setEditingStaff(null);
       toast({
         title: 'Success',
         description: 'Staff member added successfully',
       });
-      handleCloseForm();
     },
   });
 
   const updateStaffMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
+    mutationFn: async ({ id, ...staffData }: Partial<StaffMember> & { id: string }) => {
       const { error } = await supabase
         .from('staff')
-        .update(data)
+        .update(staffData)
         .eq('id', id);
+
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['staff'] });
+      setIsDialogOpen(false);
+      setEditingStaff(null);
       toast({
         title: 'Success',
         description: 'Staff member updated successfully',
       });
-      handleCloseForm();
     },
   });
 
@@ -105,6 +117,7 @@ const StaffManagement = () => {
         .from('staff')
         .delete()
         .eq('id', id);
+
       if (error) throw error;
     },
     onSuccess: () => {
@@ -116,56 +129,34 @@ const StaffManagement = () => {
     },
   });
 
-  const handleOpenForm = (staff?: Staff) => {
-    if (staff) {
-      setEditingStaff(staff);
-      setFormData({
-        name: staff.name,
-        role: staff.role,
-        bio: staff.bio || '',
-        photo_url: staff.photo_url || '',
-        is_active: staff.is_active ?? true,
-      });
-    } else {
-      setEditingStaff(null);
-      setFormData({
-        name: '',
-        role: '',
-        bio: '',
-        photo_url: '',
-        is_active: true,
-      });
-    }
-    setIsFormOpen(true);
-  };
-
-  const handleCloseForm = () => {
-    setIsFormOpen(false);
-    setEditingStaff(null);
-    setFormData({
-      name: '',
-      role: '',
-      bio: '',
-      photo_url: '',
-      is_active: true,
-    });
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    
+    const staffData = {
+      name: formData.get('name') as string,
+      position: formData.get('position') as string,
+      email: formData.get('email') as string,
+      phone: formData.get('phone') as string || undefined,
+      bio: formData.get('bio') as string || undefined,
+      image_url: formData.get('image_url') as string || undefined,
+      is_active: true,
+    };
+
     if (editingStaff) {
-      updateStaffMutation.mutate({ id: editingStaff.id, data: formData });
+      updateStaffMutation.mutate({ id: editingStaff.id, ...staffData });
     } else {
-      createStaffMutation.mutate(formData);
+      addStaffMutation.mutate(staffData);
     }
+  };
+
+  const handleEdit = (staffMember: StaffMember) => {
+    setEditingStaff(staffMember);
+    setIsDialogOpen(true);
   };
 
   const handleDelete = (id: string) => {
     deleteStaffMutation.mutate(id);
-  };
-
-  const handleFileUpload = (url: string) => {
-    setFormData(prev => ({ ...prev, photo_url: url }));
   };
 
   const activeStaff = staff?.filter(s => s.is_active) || [];
@@ -173,51 +164,142 @@ const StaffManagement = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Staff Management</h1>
-          <p className="text-gray-600">Manage team staff and coaching personnel</p>
+          <h1 className="text-3xl font-bold text-slate-900">Staff Management</h1>
+          <p className="text-slate-600">Manage club staff and personnel</p>
         </div>
-        <Button onClick={() => handleOpenForm()} className="bg-rhino-red hover:bg-red-700">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Staff Member
-        </Button>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-gradient-to-r from-rhino-red to-red-700 hover:from-red-700 hover:to-red-800">
+              <Plus className="w-4 h-4 mr-2" />
+              Add Staff Member
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[500px]">
+            <form onSubmit={handleSubmit}>
+              <DialogHeader>
+                <DialogTitle>
+                  {editingStaff ? 'Edit Staff Member' : 'Add New Staff Member'}
+                </DialogTitle>
+                <DialogDescription>
+                  Enter the details for the staff member.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="name">Name</Label>
+                  <Input
+                    id="name"
+                    name="name"
+                    defaultValue={editingStaff?.name}
+                    required
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="position">Position</Label>
+                  <Input
+                    id="position"
+                    name="position"
+                    defaultValue={editingStaff?.position}
+                    required
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    defaultValue={editingStaff?.email}
+                    required
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="phone">Phone (Optional)</Label>
+                  <Input
+                    id="phone"
+                    name="phone"
+                    defaultValue={editingStaff?.phone}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="image_url">Photo URL (Optional)</Label>
+                  <Input
+                    id="image_url"
+                    name="image_url"
+                    defaultValue={editingStaff?.image_url}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="bio">Bio (Optional)</Label>
+                  <Textarea
+                    id="bio"
+                    name="bio"
+                    defaultValue={editingStaff?.bio}
+                    rows={3}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setIsDialogOpen(false);
+                    setEditingStaff(null);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit"
+                  disabled={addStaffMutation.isPending || updateStaffMutation.isPending}
+                >
+                  {editingStaff ? 'Update' : 'Add'} Staff Member
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="border-l-4 border-l-green-500">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Staff</CardTitle>
+            <CardTitle className="text-sm font-medium text-slate-600">Active Staff</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{staff?.length || 0}</div>
+            <div className="text-3xl font-bold text-green-600">{activeStaff.length}</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-l-4 border-l-slate-400">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Active Staff</CardTitle>
+            <CardTitle className="text-sm font-medium text-slate-600">Inactive Staff</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{activeStaff.length}</div>
+            <div className="text-3xl font-bold text-slate-600">{inactiveStaff.length}</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-l-4 border-l-blue-500">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Inactive Staff</CardTitle>
+            <CardTitle className="text-sm font-medium text-slate-600">Total Staff</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-600">{inactiveStaff.length}</div>
+            <div className="text-3xl font-bold text-blue-600">{staff?.length || 0}</div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Staff Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Staff Members</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="w-5 h-5" />
+            Staff Members
+          </CardTitle>
           <CardDescription>
-            Manage coaching staff and team personnel
+            Manage all club staff and personnel
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -227,8 +309,9 @@ const StaffManagement = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Staff Member</TableHead>
-                  <TableHead>Role</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Position</TableHead>
+                  <TableHead>Contact</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Added</TableHead>
                   <TableHead>Actions</TableHead>
@@ -239,48 +322,53 @@ const StaffManagement = () => {
                   <TableRow key={member.id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        {member.photo_url ? (
-                          <img
-                            src={member.photo_url}
+                        {member.image_url ? (
+                          <img 
+                            src={member.image_url} 
                             alt={member.name}
                             className="w-10 h-10 rounded-full object-cover"
                           />
                         ) : (
-                          <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                            <Users className="w-5 h-5 text-gray-500" />
+                          <div className="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center">
+                            <Users className="w-5 h-5 text-slate-500" />
                           </div>
                         )}
                         <div>
-                          <p className="font-medium">{member.name}</p>
+                          <p className="font-medium text-slate-900">{member.name}</p>
                           {member.bio && (
-                            <p className="text-sm text-gray-600 truncate max-w-xs">
-                              {member.bio}
-                            </p>
+                            <p className="text-sm text-slate-500 truncate max-w-xs">{member.bio}</p>
                           )}
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline">{member.role}</Badge>
+                      <div className="flex items-center gap-2">
+                        <Building className="w-4 h-4 text-slate-400" />
+                        <span className="font-medium">{member.position}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-sm">
+                          <Mail className="w-3 h-3 text-slate-400" />
+                          <span>{member.email}</span>
+                        </div>
+                        {member.phone && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Phone className="w-3 h-3 text-slate-400" />
+                            <span>{member.phone}</span>
+                          </div>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <Badge variant={member.is_active ? 'default' : 'secondary'}>
-                        {member.is_active ? (
-                          <>
-                            <UserCheck className="w-3 h-3 mr-1" />
-                            Active
-                          </>
-                        ) : (
-                          <>
-                            <UserX className="w-3 h-3 mr-1" />
-                            Inactive
-                          </>
-                        )}
+                        {member.is_active ? 'Active' : 'Inactive'}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <span className="text-sm text-gray-600">
-                        {format(new Date(member.created_at!), 'MMM dd, yyyy')}
+                      <span className="text-sm text-slate-600">
+                        {format(new Date(member.created_at), 'MMM dd, yyyy')}
                       </span>
                     </TableCell>
                     <TableCell>
@@ -288,7 +376,7 @@ const StaffManagement = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleOpenForm(member)}
+                          onClick={() => handleEdit(member)}
                         >
                           <Edit className="w-4 h-4" />
                         </Button>
@@ -328,96 +416,14 @@ const StaffManagement = () => {
               </TableBody>
             </Table>
           ) : (
-            <div className="text-center py-8 text-gray-500">
-              <Users className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No staff members</h3>
-              <p className="text-gray-600 mb-4">Get started by adding your first staff member</p>
-              <Button onClick={() => handleOpenForm()} className="bg-rhino-red hover:bg-red-700">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Staff Member
-              </Button>
+            <div className="text-center py-12">
+              <Users className="w-12 h-12 text-slate-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-slate-900 mb-2">No staff members</h3>
+              <p className="text-slate-600">Add your first staff member to get started.</p>
             </div>
           )}
         </CardContent>
       </Card>
-
-      {/* Staff Form Dialog */}
-      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>{editingStaff ? 'Edit' : 'Add'} Staff Member</DialogTitle>
-          </DialogHeader>
-          
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="name">Name *</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="role">Role *</Label>
-                <Input
-                  id="role"
-                  value={formData.role}
-                  onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value }))}
-                  placeholder="e.g., Head Coach, Assistant Coach"
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="bio">Biography</Label>
-              <Textarea
-                id="bio"
-                value={formData.bio}
-                onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
-                rows={3}
-                placeholder="Brief description of experience and background"
-              />
-            </div>
-
-            <div>
-              <Label>Photo</Label>
-              <FileUpload
-                onUpload={handleFileUpload}
-                accept="image/*"
-                existingUrl={formData.photo_url}
-              />
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="is_active"
-                checked={formData.is_active}
-                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_active: checked }))}
-              />
-              <Label htmlFor="is_active">Active</Label>
-            </div>
-
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={handleCloseForm}>
-                Cancel
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={createStaffMutation.isPending || updateStaffMutation.isPending}
-                className="bg-rhino-red hover:bg-red-700"
-              >
-                {createStaffMutation.isPending || updateStaffMutation.isPending 
-                  ? 'Saving...' 
-                  : editingStaff ? 'Update' : 'Create'
-                }
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
