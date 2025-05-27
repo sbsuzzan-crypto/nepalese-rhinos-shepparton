@@ -9,15 +9,14 @@ import { format } from "date-fns";
 
 interface Fixture {
   id: string;
-  home_team: string;
-  away_team: string;
+  opponent: string;
   match_date: string;
-  match_time: string;
   venue: string;
-  home_team_logo?: string;
-  away_team_logo?: string;
+  is_home: boolean;
   status: string;
-  weather_forecast?: string;
+  home_score?: number;
+  away_score?: number;
+  match_report?: string;
 }
 
 const NextMatch = () => {
@@ -29,9 +28,8 @@ const NextMatch = () => {
         .from('fixtures')
         .select('*')
         .gte('match_date', new Date().toISOString().split('T')[0])
-        .eq('status', 'scheduled')
+        .eq('status', 'upcoming')
         .order('match_date', { ascending: true })
-        .order('match_time', { ascending: true })
         .limit(1)
         .single();
       
@@ -57,14 +55,11 @@ const NextMatch = () => {
     }
   };
 
-  const formatTime = (timeString: string) => {
+  const formatTime = (dateString: string) => {
     try {
-      const [hours, minutes] = timeString.split(':');
-      const date = new Date();
-      date.setHours(parseInt(hours), parseInt(minutes));
-      return format(date, "h:mm a");
+      return format(new Date(dateString), "h:mm a");
     } catch {
-      return timeString;
+      return "TBD";
     }
   };
 
@@ -143,6 +138,10 @@ const NextMatch = () => {
     );
   }
 
+  // Determine home and away teams based on is_home flag
+  const homeTeam = nextFixture.is_home ? "Birmingham Rhinos" : nextFixture.opponent;
+  const awayTeam = nextFixture.is_home ? nextFixture.opponent : "Birmingham Rhinos";
+
   return (
     <section className="py-16 bg-gray-50">
       <div className="container mx-auto px-4">
@@ -157,16 +156,10 @@ const NextMatch = () => {
               <div className="grid md:grid-cols-3 gap-8 items-center">
                 {/* Home Team */}
                 <div className="text-center">
-                  {nextFixture.home_team_logo ? (
-                    <img 
-                      src={nextFixture.home_team_logo} 
-                      alt={nextFixture.home_team} 
-                      className="h-20 w-20 mx-auto mb-4 object-contain"
-                    />
-                  ) : nextFixture.home_team.toLowerCase().includes('rhinos') ? (
+                  {homeTeam.toLowerCase().includes('rhinos') ? (
                     <img 
                       src="/lovable-uploads/6c39d309-610c-4c6d-8c26-4de7cddfd60a.png" 
-                      alt={nextFixture.home_team} 
+                      alt={homeTeam} 
                       className="h-20 w-20 mx-auto mb-4"
                     />
                   ) : (
@@ -174,7 +167,7 @@ const NextMatch = () => {
                       <Users size={32} className="text-gray-500" />
                     </div>
                   )}
-                  <h3 className="text-xl font-bold text-rhino-blue">{nextFixture.home_team}</h3>
+                  <h3 className="text-xl font-bold text-rhino-blue">{homeTeam}</h3>
                   <p className="text-rhino-gray">Home</p>
                 </div>
 
@@ -188,7 +181,7 @@ const NextMatch = () => {
                     </div>
                     <div className="flex items-center justify-center gap-2">
                       <Clock size={16} />
-                      <span className="text-xl font-semibold">{formatTime(nextFixture.match_time)}</span>
+                      <span className="text-xl font-semibold">{formatTime(nextFixture.match_date)}</span>
                     </div>
                     <div className="flex items-center justify-center gap-2">
                       <MapPin size={16} />
@@ -199,16 +192,10 @@ const NextMatch = () => {
 
                 {/* Away Team */}
                 <div className="text-center">
-                  {nextFixture.away_team_logo ? (
-                    <img 
-                      src={nextFixture.away_team_logo} 
-                      alt={nextFixture.away_team} 
-                      className="h-20 w-20 mx-auto mb-4 object-contain"
-                    />
-                  ) : nextFixture.away_team.toLowerCase().includes('rhinos') ? (
+                  {awayTeam.toLowerCase().includes('rhinos') ? (
                     <img 
                       src="/lovable-uploads/6c39d309-610c-4c6d-8c26-4de7cddfd60a.png" 
-                      alt={nextFixture.away_team} 
+                      alt={awayTeam} 
                       className="h-20 w-20 mx-auto mb-4"
                     />
                   ) : (
@@ -216,17 +203,12 @@ const NextMatch = () => {
                       <Users size={32} className="text-gray-500" />
                     </div>
                   )}
-                  <h3 className="text-xl font-bold text-rhino-blue">{nextFixture.away_team}</h3>
+                  <h3 className="text-xl font-bold text-rhino-blue">{awayTeam}</h3>
                   <p className="text-rhino-gray">Away</p>
                 </div>
               </div>
 
               <div className="mt-8 text-center">
-                {nextFixture.weather_forecast && (
-                  <div className="bg-blue-50 p-4 rounded-lg mb-4">
-                    <p className="text-rhino-blue font-semibold">Weather Forecast: {nextFixture.weather_forecast}</p>
-                  </div>
-                )}
                 <Button className="bg-rhino-red hover:bg-red-700 text-white">
                   Get Directions to Venue
                 </Button>
