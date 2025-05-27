@@ -38,14 +38,14 @@ const AdminUserProfile = ({ user, profile, signOut, isAdmin }: AdminUserProfileP
           </p>
           <div className="flex items-center gap-1 sm:gap-2 mt-1 flex-wrap">
             <Badge 
-              variant={profile?.role === 'admin' ? 'destructive' : 'secondary'} 
+              variant={profile?.role === 'admin' ? 'destructive' : 'info'} 
               className="text-xs"
             >
               {profile?.role === 'admin' && <Shield className="w-3 h-3 mr-1" />}
               {profile?.role}
             </Badge>
             {isAdmin && (
-              <Badge className="text-xs bg-green-600 hover:bg-green-700 hidden sm:inline-flex">
+              <Badge variant="success" className="text-xs hidden sm:inline-flex">
                 Super Admin
               </Badge>
             )}

@@ -1,40 +1,23 @@
 
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Settings, Plus, Edit, Save, X, Trash2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import DeleteConfirmationDialog from '@/components/admin/DeleteConfirmationDialog';
-import type { Tables } from '@/integrations/supabase/types';
-
-type SiteSetting = Tables<'site_settings'>;
+  Settings, 
+  Globe, 
+  Phone, 
+  Share2, 
+  Palette, 
+  Search,
+  Info,
+  CheckCircle,
+  AlertCircle
+} from 'lucide-react';
+import SettingsCategory from '@/components/admin/settings/SettingsCategory';
+import SettingField from '@/components/admin/settings/SettingField';
 
 const SiteSettingsManagement = () => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingSetting, setEditingSetting] = useState<SiteSetting | null>(null);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [settingToDelete, setSettingToDelete] = useState<SiteSetting | null>(null);
-  const [formData, setFormData] = useState({
-    key: '',
-    value: '',
-    description: '',
-  });
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-
   const { data: settings, isLoading } = useQuery({
     queryKey: ['site_settings'],
     queryFn: async () => {
@@ -44,306 +27,241 @@ const SiteSettingsManagement = () => {
         .order('key');
 
       if (error) throw error;
-      return data;
+      return data || [];
     },
   });
 
-  const createSettingMutation = useMutation({
-    mutationFn: async (newSetting: Omit<SiteSetting, 'id' | 'updated_at'>) => {
-      const { error } = await supabase
-        .from('site_settings')
-        .insert([newSetting]);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['site_settings'] });
-      toast({
-        title: 'Success',
-        description: 'Setting created successfully',
-      });
-      resetForm();
-    },
-  });
-
-  const updateSettingMutation = useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: Partial<SiteSetting> }) => {
-      const { error } = await supabase
-        .from('site_settings')
-        .update(updates)
-        .eq('id', id);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['site_settings'] });
-      toast({
-        title: 'Success',
-        description: 'Setting updated successfully',
-      });
-      resetForm();
-    },
-  });
-
-  const deleteSettingMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('site_settings')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['site_settings'] });
-      toast({
-        title: 'Success',
-        description: 'Setting deleted successfully',
-      });
-      setDeleteDialogOpen(false);
-      setSettingToDelete(null);
-    },
-  });
-
-  const resetForm = () => {
-    setFormData({ key: '', value: '', description: '' });
-    setEditingSetting(null);
-    setIsDialogOpen(false);
+  const getSettingValue = (key: string) => {
+    return settings?.find(s => s.key === key)?.value || '';
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (editingSetting) {
-      updateSettingMutation.mutate({
-        id: editingSetting.id,
-        updates: formData,
-      });
-    } else {
-      createSettingMutation.mutate(formData);
-    }
+  const isSettingConfigured = (key: string) => {
+    return Boolean(getSettingValue(key));
   };
 
-  const handleEdit = (setting: SiteSetting) => {
-    setEditingSetting(setting);
-    setFormData({
-      key: setting.key,
-      value: setting.value || '',
-      description: setting.description || '',
-    });
-    setIsDialogOpen(true);
-  };
+  const configuredCount = settings?.filter(s => s.value).length || 0;
+  const totalRecommended = 12; // Number of recommended settings
 
-  const handleDelete = (setting: SiteSetting) => {
-    setSettingToDelete(setting);
-    setDeleteDialogOpen(true);
-  };
-
-  const confirmDelete = () => {
-    if (settingToDelete) {
-      deleteSettingMutation.mutate(settingToDelete.id);
-    }
-  };
-
-  const commonSettings = [
-    { key: 'facebook_url', description: 'Facebook page URL' },
-    { key: 'instagram_url', description: 'Instagram profile URL' },
-    { key: 'youtube_url', description: 'YouTube channel URL' },
-    { key: 'contact_email', description: 'Main contact email address' },
-    { key: 'contact_phone', description: 'Main contact phone number' },
-    { key: 'club_address', description: 'Club physical address' },
-    { key: 'club_description', description: 'Short club description for footer' },
-  ];
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-slate-200 rounded w-1/3 mb-2"></div>
+          <div className="h-4 bg-slate-200 rounded w-1/2"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Header with Progress */}
+      <div className="space-y-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Site Settings</h1>
-          <p className="text-slate-600">Manage website configuration and content</p>
+          <p className="text-slate-600">Configure your website's core information and branding</p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => setEditingSetting(null)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Setting
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>
-                {editingSetting ? 'Edit Setting' : 'Add New Setting'}
-              </DialogTitle>
-              <DialogDescription>
-                {editingSetting ? 'Update the setting details below.' : 'Create a new site setting.'}
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <Label htmlFor="key">Setting Key</Label>
-                <Input
-                  id="key"
-                  value={formData.key}
-                  onChange={(e) => setFormData({ ...formData, key: e.target.value })}
-                  placeholder="e.g., facebook_url"
-                  required
-                  disabled={!!editingSetting}
+
+        {/* Configuration Progress */}
+        <Alert variant={configuredCount >= totalRecommended / 2 ? "success" : "info"}>
+          <CheckCircle className="h-4 w-4" />
+          <AlertDescription>
+            <div className="flex items-center justify-between">
+              <span>
+                Configuration Progress: {configuredCount} of {totalRecommended} recommended settings
+              </span>
+              <div className="w-32 bg-slate-200 rounded-full h-2">
+                <div 
+                  className="bg-rhino-blue h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${(configuredCount / totalRecommended) * 100}%` }}
                 />
               </div>
-              <div>
-                <Label htmlFor="value">Value</Label>
-                <Textarea
-                  id="value"
-                  value={formData.value}
-                  onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-                  placeholder="Setting value"
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="description">Description</Label>
-                <Input
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Brief description of this setting"
-                />
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={resetForm}>
-                  <X className="w-4 h-4 mr-2" />
-                  Cancel
-                </Button>
-                <Button type="submit">
-                  <Save className="w-4 h-4 mr-2" />
-                  {editingSetting ? 'Update' : 'Create'}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+            </div>
+          </AlertDescription>
+        </Alert>
       </div>
 
-      {/* Quick Setup for Common Settings */}
-      <Card>
+      {/* Settings Categories */}
+      <div className="grid gap-6">
+        {/* General Information */}
+        <SettingsCategory
+          title="General Information"
+          description="Basic website information and descriptions"
+          icon={Globe}
+        >
+          <div className="space-y-6">
+            <SettingField
+              settingKey="site_name"
+              label="Site Name"
+              description="The name of your football club website"
+              currentValue={getSettingValue('site_name')}
+              placeholder="Nepalese Rhinos FC"
+              isConfigured={isSettingConfigured('site_name')}
+            />
+            <SettingField
+              settingKey="site_description"
+              label="Site Description"
+              description="A brief description of your club for SEO and social sharing"
+              currentValue={getSettingValue('site_description')}
+              type="textarea"
+              placeholder="Official website of Nepalese Rhinos Football Club..."
+              isConfigured={isSettingConfigured('site_description')}
+            />
+            <SettingField
+              settingKey="club_description"
+              label="Club Description"
+              description="Short description displayed in the footer"
+              currentValue={getSettingValue('club_description')}
+              type="textarea"
+              placeholder="A passionate football club representing the Nepalese community..."
+              isConfigured={isSettingConfigured('club_description')}
+            />
+          </div>
+        </SettingsCategory>
+
+        {/* Contact Information */}
+        <SettingsCategory
+          title="Contact Information"
+          description="How supporters and partners can reach you"
+          icon={Phone}
+        >
+          <div className="space-y-6">
+            <SettingField
+              settingKey="contact_email"
+              label="Contact Email"
+              description="Main email address for inquiries"
+              currentValue={getSettingValue('contact_email')}
+              type="email"
+              placeholder="info@nepaleserhinos.com"
+              isConfigured={isSettingConfigured('contact_email')}
+            />
+            <SettingField
+              settingKey="contact_phone"
+              label="Contact Phone"
+              description="Main phone number for the club"
+              currentValue={getSettingValue('contact_phone')}
+              type="tel"
+              placeholder="+1 (555) 123-4567"
+              isConfigured={isSettingConfigured('contact_phone')}
+            />
+            <SettingField
+              settingKey="club_address"
+              label="Club Address"
+              description="Physical address of the club"
+              currentValue={getSettingValue('club_address')}
+              type="textarea"
+              placeholder="123 Football Lane, Sports City, SC 12345"
+              isConfigured={isSettingConfigured('club_address')}
+            />
+            <SettingField
+              settingKey="business_hours"
+              label="Business Hours"
+              description="When the club office is open"
+              currentValue={getSettingValue('business_hours')}
+              placeholder="Mon-Fri: 9AM-5PM, Sat: 10AM-2PM"
+              isConfigured={isSettingConfigured('business_hours')}
+            />
+          </div>
+        </SettingsCategory>
+
+        {/* Social Media */}
+        <SettingsCategory
+          title="Social Media Links"
+          description="Connect your social media profiles"
+          icon={Share2}
+        >
+          <div className="space-y-6">
+            <SettingField
+              settingKey="facebook_url"
+              label="Facebook Page"
+              description="Link to your Facebook page"
+              currentValue={getSettingValue('facebook_url')}
+              type="url"
+              placeholder="https://facebook.com/nepaleserhinos"
+              isConfigured={isSettingConfigured('facebook_url')}
+            />
+            <SettingField
+              settingKey="instagram_url"
+              label="Instagram Profile"
+              description="Link to your Instagram profile"
+              currentValue={getSettingValue('instagram_url')}
+              type="url"
+              placeholder="https://instagram.com/nepaleserhinos"
+              isConfigured={isSettingConfigured('instagram_url')}
+            />
+            <SettingField
+              settingKey="youtube_url"
+              label="YouTube Channel"
+              description="Link to your YouTube channel"
+              currentValue={getSettingValue('youtube_url')}
+              type="url"
+              placeholder="https://youtube.com/@nepaleserhinos"
+              isConfigured={isSettingConfigured('youtube_url')}
+            />
+            <SettingField
+              settingKey="twitter_url"
+              label="Twitter/X Profile"
+              description="Link to your Twitter/X profile"
+              currentValue={getSettingValue('twitter_url')}
+              type="url"
+              placeholder="https://twitter.com/nepaleserhinos"
+              isConfigured={isSettingConfigured('twitter_url')}
+            />
+          </div>
+        </SettingsCategory>
+
+        {/* SEO & Meta */}
+        <SettingsCategory
+          title="SEO & Meta Information"
+          description="Improve your website's search engine visibility"
+          icon={Search}
+        >
+          <div className="space-y-6">
+            <SettingField
+              settingKey="meta_keywords"
+              label="Meta Keywords"
+              description="Keywords for search engines (comma-separated)"
+              currentValue={getSettingValue('meta_keywords')}
+              placeholder="football, soccer, nepalese, rhinos, club, sports"
+              isConfigured={isSettingConfigured('meta_keywords')}
+            />
+            <SettingField
+              settingKey="google_analytics_id"
+              label="Google Analytics ID"
+              description="Your Google Analytics tracking ID"
+              currentValue={getSettingValue('google_analytics_id')}
+              placeholder="GA-XXXXXXXXX-X"
+              isConfigured={isSettingConfigured('google_analytics_id')}
+            />
+          </div>
+        </SettingsCategory>
+      </div>
+
+      {/* Help Card */}
+      <Card className="bg-blue-50 border-blue-200">
         <CardHeader>
-          <CardTitle>Quick Setup</CardTitle>
-          <CardDescription>
-            Common settings to get your site configured quickly
-          </CardDescription>
+          <CardTitle className="flex items-center gap-2 text-blue-800">
+            <Info className="w-5 h-5" />
+            Need Help?
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {commonSettings.map((setting) => {
-              const existingSetting = settings?.find(s => s.key === setting.key);
-              return (
-                <div key={setting.key} className="p-4 border rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-medium">{setting.key}</h4>
-                      <p className="text-sm text-slate-600">{setting.description}</p>
-                      {existingSetting && (
-                        <p className="text-sm text-green-600 mt-1">
-                          ✓ Configured
-                        </p>
-                      )}
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        if (existingSetting) {
-                          handleEdit(existingSetting);
-                        } else {
-                          setFormData({
-                            key: setting.key,
-                            value: '',
-                            description: setting.description,
-                          });
-                          setIsDialogOpen(true);
-                        }
-                      }}
-                    >
-                      {existingSetting ? <Edit className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
+          <div className="space-y-2 text-blue-700">
+            <p className="text-sm">
+              • Configure at least the basic contact information and social media links
+            </p>
+            <p className="text-sm">
+              • SEO settings help your website appear better in search results
+            </p>
+            <p className="text-sm">
+              • All changes are saved automatically when you click Save
+            </p>
+            <p className="text-sm">
+              • Settings marked as "Configured" are already set up and active
+            </p>
           </div>
         </CardContent>
       </Card>
-
-      {/* All Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Settings className="w-5 h-5" />
-            All Settings
-          </CardTitle>
-          <CardDescription>
-            Manage all site configuration settings
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="text-center py-8">Loading settings...</div>
-          ) : settings && settings.length > 0 ? (
-            <div className="space-y-4">
-              {settings.map((setting) => (
-                <div key={setting.id} className="p-4 border rounded-lg">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h4 className="font-medium text-slate-900">{setting.key}</h4>
-                      {setting.description && (
-                        <p className="text-sm text-slate-600 mb-2">{setting.description}</p>
-                      )}
-                      <div className="bg-slate-50 p-2 rounded text-sm font-mono">
-                        {setting.value || 'No value set'}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEdit(setting)}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDelete(setting)}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <Settings className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-slate-900 mb-2">No settings configured</h3>
-              <p className="text-slate-600">Start by adding your first site setting.</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Delete Confirmation Dialog */}
-      <DeleteConfirmationDialog
-        isOpen={deleteDialogOpen}
-        onClose={() => setDeleteDialogOpen(false)}
-        onConfirm={confirmDelete}
-        itemName={settingToDelete?.key || ''}
-        itemType="Setting"
-        isLoading={deleteSettingMutation.isPending}
-        customMessage={`Are you sure you want to delete the "${settingToDelete?.key}" setting? This will remove the configuration value permanently.`}
-        isDestructive={true}
-      />
     </div>
   );
 };

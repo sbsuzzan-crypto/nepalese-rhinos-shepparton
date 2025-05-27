@@ -21,7 +21,7 @@ const DashboardCard = ({
   value, 
   icon: Icon, 
   href, 
-  color = 'text-blue-600',
+  color = 'text-rhino-blue',
   description,
   trend 
 }: DashboardCardProps) => {
@@ -46,7 +46,7 @@ const DashboardCard = ({
             <div className="text-2xl font-bold text-gray-900">{value}</div>
             {trend && (
               <span className={`text-sm font-medium ${
-                trend.isPositive ? 'text-green-600' : 'text-red-600'
+                trend.isPositive ? 'text-emerald-600' : 'text-red-600'
               }`}>
                 {trend.isPositive ? '+' : ''}{trend.value}%
               </span>

@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Users, 
@@ -13,7 +14,8 @@ import {
   UserCheck,
   UserX,
   Activity,
-  TrendingUp
+  TrendingUp,
+  CheckCircle
 } from 'lucide-react';
 import DashboardCard from '@/components/admin/DashboardCard';
 import QuickActionCard from '@/components/admin/QuickActionCard';
@@ -83,28 +85,28 @@ const Dashboard = () => {
       description: 'Share the latest club news and match reports with supporters',
       href: '/admin/news',
       icon: FileText,
-      color: 'bg-blue-500'
+      color: 'bg-rhino-blue'
     },
     {
       title: 'Add Player',
       description: 'Register new squad members and update player profiles',
       href: '/admin/players',
       icon: Users,
-      color: 'bg-green-500'
+      color: 'bg-emerald-600'
     },
     {
       title: 'Schedule Fixture',
       description: 'Add upcoming matches and update fixture information',
       href: '/admin/fixtures',
       icon: Calendar,
-      color: 'bg-purple-500'
+      color: 'bg-purple-600'
     },
     {
       title: 'Upload Gallery',
       description: 'Add match photos and team moments to the gallery',
       href: '/admin/gallery',
       icon: Image,
-      color: 'bg-orange-500'
+      color: 'bg-orange-600'
     }
   ];
 
@@ -114,7 +116,7 @@ const Dashboard = () => {
       value: stats.news,
       icon: FileText,
       href: '/admin/news',
-      color: 'text-blue-600',
+      color: 'text-rhino-blue',
       description: 'Published articles'
     },
     {
@@ -122,7 +124,7 @@ const Dashboard = () => {
       value: stats.players,
       icon: Users,
       href: '/admin/players',
-      color: 'text-green-600',
+      color: 'text-emerald-600',
       description: 'Squad members'
     },
     {
@@ -154,7 +156,7 @@ const Dashboard = () => {
       value: stats.sponsors,
       icon: Trophy,
       href: '/admin/sponsors',
-      color: 'text-yellow-600',
+      color: 'text-blue-600',
       description: 'Active partnerships'
     }
   ];
@@ -202,6 +204,14 @@ const Dashboard = () => {
         </div>
       </div>
 
+      {/* System Status Alert */}
+      <Alert variant="success">
+        <CheckCircle className="h-4 w-4" />
+        <AlertDescription>
+          All systems are running smoothly. Your website is online and accessible to visitors.
+        </AlertDescription>
+      </Alert>
+
       {/* Quick Actions */}
       <div>
         <h2 className="text-xl font-semibold mb-4 text-gray-900">Quick Actions</h2>
@@ -227,10 +237,10 @@ const Dashboard = () => {
         <div>
           <h2 className="text-xl font-semibold mb-4 text-gray-900">Admin Features</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card className="border-l-4 border-l-blue-500">
+            <Card className="border-l-4 border-l-rhino-blue">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <UserCheck className="h-5 w-5 text-blue-600" />
+                  <UserCheck className="h-5 w-5 text-rhino-blue" />
                   User Management
                 </CardTitle>
                 <CardDescription>
@@ -241,7 +251,7 @@ const Dashboard = () => {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span>Approved Users:</span>
-                    <span className="font-medium text-green-600">{stats.approvedUsers}</span>
+                    <span className="font-medium text-emerald-600">{stats.approvedUsers}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Pending Approval:</span>
@@ -269,7 +279,7 @@ const Dashboard = () => {
                   </div>
                   <div className="flex justify-between">
                     <span>System Access:</span>
-                    <span className="font-medium text-green-600">Full Control</span>
+                    <span className="font-medium text-emerald-600">Full Control</span>
                   </div>
                 </div>
               </CardContent>
@@ -290,19 +300,19 @@ const Dashboard = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div className="space-y-2">
               <h4 className="font-medium text-gray-900">Content Management</h4>
-              <p className="text-green-600">✅ Create and edit news articles</p>
-              <p className="text-green-600">✅ Manage player profiles</p>
-              <p className="text-green-600">✅ Update fixtures and results</p>
-              <p className="text-green-600">✅ Upload gallery images</p>
+              <p className="text-emerald-600">✅ Create and edit news articles</p>
+              <p className="text-emerald-600">✅ Manage player profiles</p>
+              <p className="text-emerald-600">✅ Update fixtures and results</p>
+              <p className="text-emerald-600">✅ Upload gallery images</p>
             </div>
             <div className="space-y-2">
               <h4 className="font-medium text-gray-900">Communication</h4>
-              <p className="text-green-600">✅ View contact messages</p>
-              <p className="text-green-600">✅ Manage sponsor information</p>
+              <p className="text-emerald-600">✅ View contact messages</p>
+              <p className="text-emerald-600">✅ Manage sponsor information</p>
               {isAdmin && (
                 <>
-                  <p className="text-green-600">✅ Approve user accounts</p>
-                  <p className="text-green-600">✅ Manage staff members</p>
+                  <p className="text-emerald-600">✅ Approve user accounts</p>
+                  <p className="text-emerald-600">✅ Manage staff members</p>
                 </>
               )}
             </div>
