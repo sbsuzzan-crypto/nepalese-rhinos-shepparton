@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Outlet, Link, useLocation, Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -213,9 +212,9 @@ const AdminLayout = () => {
     },
     {
       name: 'Site Settings',
-      href: '/admin/site-settings',
+      href: '/admin/settings',
       icon: Settings,
-      current: location.pathname === '/admin/site-settings',
+      current: location.pathname === '/admin/settings',
       roles: ['admin'] // Admin only
     },
     {
