@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import About from "./pages/About";
 import Teams from "./pages/Teams";
@@ -43,53 +44,55 @@ const queryClient = new QueryClient();
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/" element={<Index />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/teams" element={<Teams />} />
-            <Route path="/fixtures" element={<Fixtures />} />
-            <Route path="/gallery" element={<Gallery />} />
-            <Route path="/gallery/all" element={<AllGallery />} />
-            <Route path="/gallery/:id" element={<GalleryPage />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/join" element={<JoinUs />} />
-            <Route path="/auth" element={<Auth />} />
-            
-            {/* Admin routes */}
-            <Route path="/admin" element={
-              <ProtectedRoute>
-                <AdminLayout />
-              </ProtectedRoute>
-            }>
-              <Route index element={<Dashboard />} />
-              <Route path="news" element={<NewsManagement />} />
-              <Route path="players" element={<PlayersManagement />} />
-              <Route path="teams" element={<TeamsManagement />} />
-              <Route path="fixtures" element={<FixturesManagement />} />
-              <Route path="gallery" element={<GalleryManagement />} />
-              <Route path="contact-submissions" element={<ContactSubmissionsManagement />} />
-              <Route path="join-submissions" element={<JoinSubmissionsManagement />} />
-              <Route path="staff" element={<StaffManagement />} />
-              <Route path="sponsors" element={<SponsorsManagement />} />
-              <Route path="events" element={<EventsManagement />} />
-              <Route path="announcements" element={<AnnouncementsManagement />} />
-              <Route path="documents" element={<DocumentsManagement />} />
-              <Route path="messages" element={<MessagesManagement />} />
-              <Route path="supporters-messages" element={<SupportersMessagesManagement />} />
-              <Route path="users" element={<UserManagement />} />
-              <Route path="settings" element={<SiteSettingsManagement />} />
-            </Route>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              {/* Public routes */}
+              <Route path="/" element={<Index />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/teams" element={<Teams />} />
+              <Route path="/fixtures" element={<Fixtures />} />
+              <Route path="/gallery" element={<Gallery />} />
+              <Route path="/gallery/all" element={<AllGallery />} />
+              <Route path="/gallery/:id" element={<GalleryPage />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/join" element={<JoinUs />} />
+              <Route path="/auth" element={<Auth />} />
+              
+              {/* Admin routes */}
+              <Route path="/admin" element={
+                <ProtectedRoute>
+                  <AdminLayout />
+                </ProtectedRoute>
+              }>
+                <Route index element={<Dashboard />} />
+                <Route path="news" element={<NewsManagement />} />
+                <Route path="players" element={<PlayersManagement />} />
+                <Route path="teams" element={<TeamsManagement />} />
+                <Route path="fixtures" element={<FixturesManagement />} />
+                <Route path="gallery" element={<GalleryManagement />} />
+                <Route path="contact-submissions" element={<ContactSubmissionsManagement />} />
+                <Route path="join-submissions" element={<JoinSubmissionsManagement />} />
+                <Route path="staff" element={<StaffManagement />} />
+                <Route path="sponsors" element={<SponsorsManagement />} />
+                <Route path="events" element={<EventsManagement />} />
+                <Route path="announcements" element={<AnnouncementsManagement />} />
+                <Route path="documents" element={<DocumentsManagement />} />
+                <Route path="messages" element={<MessagesManagement />} />
+                <Route path="supporters-messages" element={<SupportersMessagesManagement />} />
+                <Route path="users" element={<UserManagement />} />
+                <Route path="settings" element={<SiteSettingsManagement />} />
+              </Route>
 
-            {/* 404 route */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+              {/* 404 route */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
