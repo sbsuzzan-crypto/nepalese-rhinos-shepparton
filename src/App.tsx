@@ -19,6 +19,8 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/admin/Dashboard";
 import NewsManagement from "./pages/admin/NewsManagement";
 import PlayersManagement from "./pages/admin/PlayersManagement";
+import FixturesManagement from "./pages/admin/FixturesManagement";
+import GalleryManagement from "./pages/admin/GalleryManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -57,6 +59,8 @@ const App = () => (
               <Route index element={<Dashboard />} />
               <Route path="news" element={<NewsManagement />} />
               <Route path="players" element={<PlayersManagement />} />
+              <Route path="fixtures" element={<FixturesManagement />} />
+              <Route path="gallery" element={<GalleryManagement />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
