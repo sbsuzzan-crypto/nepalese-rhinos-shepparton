@@ -38,6 +38,7 @@ import { format } from 'date-fns';
 import type { Database } from '@/integrations/supabase/types';
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
+type UserRole = Database['public']['Enums']['user_role'];
 
 const UserManagement = () => {
   const [selectedTab, setSelectedTab] = useState('pending');
@@ -76,7 +77,7 @@ const UserManagement = () => {
   });
 
   const updateRoleMutation = useMutation({
-    mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
+    mutationFn: async ({ userId, role }: { userId: string; role: UserRole }) => {
       const { error } = await supabase
         .from('profiles')
         .update({ role })
@@ -115,7 +116,7 @@ const UserManagement = () => {
     approveUserMutation.mutate(userId);
   };
 
-  const handleUpdateRole = (userId: string, role: string) => {
+  const handleUpdateRole = (userId: string, role: UserRole) => {
     updateRoleMutation.mutate({ userId, role });
   };
 
@@ -165,7 +166,7 @@ const UserManagement = () => {
                 {user.is_approved && (
                   <Select
                     value={user.role || 'moderator'}
-                    onValueChange={(value) => handleUpdateRole(user.id, value)}
+                    onValueChange={(value: UserRole) => handleUpdateRole(user.id, value)}
                   >
                     <SelectTrigger className="w-32 h-7">
                       <SelectValue />
