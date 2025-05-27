@@ -3,6 +3,8 @@ import { Facebook, Instagram, Youtube } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Footer = () => {
+  const currentYear = new Date().getFullYear();
+
   return (
     <footer className="bg-rhino-navy text-white py-12">
       <div className="container mx-auto px-4">
@@ -88,7 +90,7 @@ const Footer = () => {
 
           <div className="border-t border-white/20 pt-8">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm opacity-75">
-              <p>&copy; 2024 Nepalese Rhinos FC. All rights reserved.</p>
+              <p>&copy; {currentYear} Nepalese Rhinos FC. All rights reserved.</p>
               <div className="flex gap-6">
                 <a href="#" className="hover:opacity-100 hover:text-rhino-red transition-all duration-200">Privacy Policy</a>
                 <a href="#" className="hover:opacity-100 hover:text-rhino-red transition-all duration-200">Code of Conduct</a>

@@ -31,6 +31,8 @@ import TeamsManagement from "./pages/admin/TeamsManagement";
 import JoinSubmissionsManagement from "./pages/admin/JoinSubmissionsManagement";
 import ContactSubmissionsManagement from "./pages/admin/ContactSubmissionsManagement";
 import DocumentsManagement from "./pages/admin/DocumentsManagement";
+import SupportersMessagesManagement from "./pages/admin/SupportersMessagesManagement";
+import SiteSettingsManagement from "./pages/admin/SiteSettingsManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -76,6 +78,8 @@ const App = () => (
               <Route path="gallery" element={<GalleryManagement />} />
               <Route path="sponsors" element={<SponsorsManagement />} />
               <Route path="messages" element={<MessagesManagement />} />
+              <Route path="supporters-messages" element={<SupportersMessagesManagement />} />
+              <Route path="site-settings" element={<SiteSettingsManagement />} />
               <Route path="join-submissions" element={<JoinSubmissionsManagement />} />
               <Route path="contact-submissions" element={<ContactSubmissionsManagement />} />
               <Route path="documents" element={<DocumentsManagement />} />

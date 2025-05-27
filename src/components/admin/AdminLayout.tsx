@@ -19,7 +19,9 @@ import {
   UserCheck,
   Shield,
   Megaphone,
-  CalendarDays
+  CalendarDays,
+  Heart,
+  FolderOpen
 } from 'lucide-react';
 
 const AdminLayout = () => {
@@ -148,6 +150,36 @@ const AdminLayout = () => {
       href: '/admin/messages',
       icon: MessageSquare,
       current: location.pathname === '/admin/messages'
+    },
+    {
+      name: 'Supporters',
+      href: '/admin/supporters-messages',
+      icon: Heart,
+      current: location.pathname === '/admin/supporters-messages'
+    },
+    {
+      name: 'Join Requests',
+      href: '/admin/join-submissions',
+      icon: UserCheck,
+      current: location.pathname === '/admin/join-submissions'
+    },
+    {
+      name: 'Contact Forms',
+      href: '/admin/contact-submissions',
+      icon: MessageSquare,
+      current: location.pathname === '/admin/contact-submissions'
+    },
+    {
+      name: 'Documents',
+      href: '/admin/documents',
+      icon: FolderOpen,
+      current: location.pathname === '/admin/documents'
+    },
+    {
+      name: 'Site Settings',
+      href: '/admin/site-settings',
+      icon: Settings,
+      current: location.pathname === '/admin/site-settings'
     }
   ];
 
