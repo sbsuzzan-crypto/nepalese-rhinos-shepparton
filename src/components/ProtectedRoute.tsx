@@ -22,7 +22,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
             <Shield className="w-8 h-8 text-white" />
           </div>
           <Loader2 className="h-8 w-8 animate-spin text-rhino-red mx-auto mb-4" />
-          <p className="text-slate-600 font-medium">Checking permissions...</p>
+          <p className="text-slate-600 font-medium">Verifying access...</p>
         </div>
       </div>
     );
