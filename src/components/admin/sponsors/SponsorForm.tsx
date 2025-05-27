@@ -132,7 +132,7 @@ const SponsorForm = ({ sponsor, onClose, onSuccess }: SponsorFormProps) => {
             <FileUpload
               onUpload={handleFileUpload}
               accept="image/*"
-              currentUrl={formData.logo_url}
+              existingUrl={formData.logo_url}
             />
           </div>
 

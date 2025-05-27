@@ -45,10 +45,10 @@ const MessagesManagement = () => {
     },
   });
 
-  const markAsReadMutation = useMutation({
-    mutationFn: async ({ id, table }: { id: string; table: string }) => {
+  const markContactAsReadMutation = useMutation({
+    mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from(table)
+        .from('contact_messages')
         .update({ is_read: true })
         .eq('id', id);
 
@@ -56,14 +56,13 @@ const MessagesManagement = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contact-messages'] });
-      queryClient.invalidateQueries({ queryKey: ['join-submissions'] });
     },
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: async ({ id, table }: { id: string; table: string }) => {
+  const deleteContactMutation = useMutation({
+    mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from(table)
+        .from('contact_messages')
         .delete()
         .eq('id', id);
 
@@ -71,21 +70,44 @@ const MessagesManagement = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contact-messages'] });
-      queryClient.invalidateQueries({ queryKey: ['join-submissions'] });
       toast({
         title: 'Success',
-        description: 'Message deleted successfully',
+        description: 'Contact message deleted successfully',
       });
     },
   });
 
-  const handleMarkAsRead = (id: string, table: string) => {
-    markAsReadMutation.mutate({ id, table });
+  const deleteJoinMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('join_submissions')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['join-submissions'] });
+      toast({
+        title: 'Success',
+        description: 'Join submission deleted successfully',
+      });
+    },
+  });
+
+  const handleMarkContactAsRead = (id: string) => {
+    markContactAsReadMutation.mutate(id);
   };
 
-  const handleDelete = (id: string, table: string) => {
-    if (window.confirm('Are you sure you want to delete this message?')) {
-      deleteMutation.mutate({ id, table });
+  const handleDeleteContact = (id: string) => {
+    if (window.confirm('Are you sure you want to delete this contact message?')) {
+      deleteContactMutation.mutate(id);
+    }
+  };
+
+  const handleDeleteJoin = (id: string) => {
+    if (window.confirm('Are you sure you want to delete this join submission?')) {
+      deleteJoinMutation.mutate(id);
     }
   };
 
@@ -172,7 +194,7 @@ const MessagesManagement = () => {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleMarkAsRead(message.id, 'contact_messages')}
+                            onClick={() => handleMarkContactAsRead(message.id)}
                           >
                             <Eye className="h-4 w-4 mr-1" />
                             Mark Read
@@ -181,7 +203,7 @@ const MessagesManagement = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleDelete(message.id, 'contact_messages')}
+                          onClick={() => handleDeleteContact(message.id)}
                           className="text-red-600 hover:text-red-700"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -233,7 +255,7 @@ const MessagesManagement = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleDelete(submission.id, 'join_submissions')}
+                        onClick={() => handleDeleteJoin(submission.id)}
                         className="text-red-600 hover:text-red-700"
                       >
                         <Trash2 className="h-4 w-4" />
