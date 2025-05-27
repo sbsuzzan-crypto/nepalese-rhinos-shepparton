@@ -66,7 +66,7 @@ const Teams = () => {
 
   const getPositionBadgeColor = (position: string) => {
     switch (position.toLowerCase()) {
-      case 'goalkeeper': return 'bg-yellow-500';
+      case 'goalkeeper': return 'bg-orange-500';
       case 'defender': return 'bg-blue-500';
       case 'midfielder': return 'bg-green-500';
       case 'forward': return 'bg-red-500';

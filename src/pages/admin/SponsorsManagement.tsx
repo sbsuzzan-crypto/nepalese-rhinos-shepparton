@@ -126,7 +126,7 @@ const SponsorsManagement = () => {
             <CardTitle className="text-sm font-medium">Gold Partners</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">
+            <div className="text-2xl font-bold text-amber-600">
               {sponsors?.filter(s => s.tier === 'gold').length || 0}
             </div>
           </CardContent>
