@@ -251,6 +251,7 @@ const NewsManagement = () => {
                 <FileUpload
                   onUpload={(url) => setFormData({ ...formData, featured_image_url: url })}
                   accept="image/*"
+                  fileType="image"
                   existingUrl={formData.featured_image_url}
                 />
               </div>

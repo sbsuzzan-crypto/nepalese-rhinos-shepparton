@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -398,9 +397,17 @@ const DocumentsManagement = () => {
                 name="file_url"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>File URL</FormLabel>
+                    <FormLabel>Document File</FormLabel>
                     <FormControl>
-                      <Input placeholder="https://..." {...field} />
+                      <div>
+                        <FileUpload
+                          onUpload={(url) => field.onChange(url)}
+                          accept=".pdf,.doc,.docx,.txt,.xls,.xlsx,.ppt,.pptx"
+                          fileType="document"
+                          existingUrl={field.value}
+                          maxSize={10 * 1024 * 1024} // 10MB for documents
+                        />
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>

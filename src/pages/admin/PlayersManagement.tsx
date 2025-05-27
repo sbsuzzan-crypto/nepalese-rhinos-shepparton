@@ -288,6 +288,7 @@ const PlayersManagement = () => {
                 <FileUpload
                   onUpload={(url) => setFormData({ ...formData, photo_url: url })}
                   accept="image/*"
+                  fileType="image"
                   existingUrl={formData.photo_url}
                 />
               </div>

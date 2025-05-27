@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -47,6 +46,13 @@ type StaffMember = Tables<'staff'>;
 const StaffManagement = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    role: '',
+    bio: '',
+    photo_url: '',
+    is_active: true
+  });
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -128,13 +134,12 @@ const StaffManagement = () => {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
     
     const staffData = {
-      name: formData.get('name') as string,
-      role: formData.get('role') as string,
-      bio: formData.get('bio') as string || undefined,
-      photo_url: formData.get('photo_url') as string || undefined,
+      name: formData.name,
+      role: formData.role,
+      bio: formData.bio || undefined,
+      photo_url: formData.photo_url || undefined,
       is_active: true,
     };
 
@@ -147,11 +152,30 @@ const StaffManagement = () => {
 
   const handleEdit = (staffMember: StaffMember) => {
     setEditingStaff(staffMember);
+    setFormData({
+      name: staffMember.name,
+      role: staffMember.role,
+      bio: staffMember.bio || '',
+      photo_url: staffMember.photo_url || '',
+      is_active: staffMember.is_active
+    });
     setIsDialogOpen(true);
   };
 
   const handleDelete = (id: string) => {
     deleteStaffMutation.mutate(id);
+  };
+
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      role: '',
+      bio: '',
+      photo_url: '',
+      is_active: true
+    });
+    setEditingStaff(null);
+    setIsDialogOpen(false);
   };
 
   const activeStaff = staff?.filter(s => s.is_active) || [];
@@ -186,8 +210,8 @@ const StaffManagement = () => {
                   <Label htmlFor="name">Name</Label>
                   <Input
                     id="name"
-                    name="name"
-                    defaultValue={editingStaff?.name}
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     required
                   />
                 </div>
@@ -195,26 +219,27 @@ const StaffManagement = () => {
                   <Label htmlFor="role">Role</Label>
                   <Input
                     id="role"
-                    name="role"
-                    defaultValue={editingStaff?.role}
+                    value={formData.role}
+                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                     placeholder="e.g., Manager, Coach, Assistant"
                     required
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="photo_url">Photo URL (Optional)</Label>
-                  <Input
-                    id="photo_url"
-                    name="photo_url"
-                    defaultValue={editingStaff?.photo_url || ''}
+                  <Label>Photo</Label>
+                  <FileUpload
+                    onUpload={(url) => setFormData({ ...formData, photo_url: url })}
+                    accept="image/*"
+                    fileType="image"
+                    existingUrl={formData.photo_url}
                   />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="bio">Bio (Optional)</Label>
                   <Textarea
                     id="bio"
-                    name="bio"
-                    defaultValue={editingStaff?.bio || ''}
+                    value={formData.bio}
+                    onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
                     rows={3}
                   />
                 </div>
@@ -223,10 +248,7 @@ const StaffManagement = () => {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => {
-                    setIsDialogOpen(false);
-                    setEditingStaff(null);
-                  }}
+                  onClick={resetForm}
                 >
                   Cancel
                 </Button>
