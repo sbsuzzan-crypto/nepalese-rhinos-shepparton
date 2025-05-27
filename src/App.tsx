@@ -27,6 +27,8 @@ import StaffManagement from "./pages/admin/StaffManagement";
 import UserManagement from "./pages/admin/UserManagement";
 import AnnouncementsManagement from "./pages/admin/AnnouncementsManagement";
 import EventsManagement from "./pages/admin/EventsManagement";
+import TeamsManagement from "./pages/admin/TeamsManagement";
+import JoinSubmissionsManagement from "./pages/admin/JoinSubmissionsManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -67,10 +69,12 @@ const App = () => (
               <Route path="announcements" element={<AnnouncementsManagement />} />
               <Route path="events" element={<EventsManagement />} />
               <Route path="players" element={<PlayersManagement />} />
+              <Route path="teams" element={<TeamsManagement />} />
               <Route path="fixtures" element={<FixturesManagement />} />
               <Route path="gallery" element={<GalleryManagement />} />
               <Route path="sponsors" element={<SponsorsManagement />} />
               <Route path="messages" element={<MessagesManagement />} />
+              <Route path="join-submissions" element={<JoinSubmissionsManagement />} />
               <Route 
                 path="staff" 
                 element={
