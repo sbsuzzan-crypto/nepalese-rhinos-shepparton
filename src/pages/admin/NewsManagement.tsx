@@ -36,7 +36,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { News, Plus, Edit, Trash2, Eye, Calendar, User } from 'lucide-react';
+import { Newspaper, Plus, Edit, Trash2, Eye, Calendar, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import FileUpload from '@/components/admin/FileUpload';
@@ -316,7 +316,7 @@ const NewsManagement = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <News className="w-5 h-5" />
+            <Newspaper className="w-5 h-5" />
             News Articles
           </CardTitle>
           <CardDescription>
@@ -350,7 +350,7 @@ const NewsManagement = () => {
                           />
                         ) : (
                           <div className="w-12 h-12 bg-slate-200 rounded flex items-center justify-center">
-                            <News className="w-6 h-6 text-slate-500" />
+                            <Newspaper className="w-6 h-6 text-slate-500" />
                           </div>
                         )}
                         <div>
@@ -426,7 +426,7 @@ const NewsManagement = () => {
             </Table>
           ) : (
             <div className="text-center py-12">
-              <News className="w-12 h-12 text-slate-400 mx-auto mb-4" />
+              <Newspaper className="w-12 h-12 text-slate-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-slate-900 mb-2">No news articles</h3>
               <p className="text-slate-600">Create your first news article to get started.</p>
             </div>
