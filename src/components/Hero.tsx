@@ -18,7 +18,7 @@ const Hero = () => {
             <Link to="/join-us">
               <Button 
                 size="lg" 
-                className="bg-rhino-red hover:bg-red-700 text-white px-8 py-6 text-lg font-semibold transition-all duration-300 transform hover:scale-105"
+                className="bg-rhino-red hover:bg-red-700 text-white px-8 py-6 text-lg font-semibold transition-all duration-300 transform hover:scale-105 hover:shadow-lg"
               >
                 Join Our Club
               </Button>
@@ -27,18 +27,9 @@ const Hero = () => {
               <Button 
                 variant="outline" 
                 size="lg" 
-                className="border-white text-white hover:bg-white hover:text-rhino-blue px-8 py-6 text-lg font-semibold transition-all duration-300"
+                className="border-white text-white hover:bg-white hover:text-rhino-blue px-8 py-6 text-lg font-semibold transition-all duration-300 transform hover:scale-105 hover:shadow-lg"
               >
                 View Fixtures
-              </Button>
-            </Link>
-            <Link to="/auth">
-              <Button 
-                variant="outline" 
-                size="lg" 
-                className="border-white text-white hover:bg-white hover:text-rhino-blue px-8 py-6 text-lg font-semibold transition-all duration-300"
-              >
-                Admin Login
               </Button>
             </Link>
           </div>

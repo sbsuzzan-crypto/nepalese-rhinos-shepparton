@@ -1,11 +1,13 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
+import { Menu } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
+import MobileSidebar from "./MobileSidebar";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
 
   const navigation = [
@@ -24,74 +26,87 @@ const Header = () => {
     return false;
   };
 
+  // Handle scroll effect
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
-    <header className="bg-white shadow-lg sticky top-0 z-50">
-      <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center py-4">
-          {/* Logo */}
-          <Link to="/" className="flex items-center space-x-3">
-            <img 
-              src="/lovable-uploads/6c39d309-610c-4c6d-8c26-4de7cddfd60a.png" 
-              alt="Nepalese Rhinos FC" 
-              className="h-12 w-12"
-            />
-            <div>
-              <h1 className="text-xl font-bold text-rhino-blue">Nepalese Rhinos FC</h1>
-              <p className="text-sm text-rhino-gray">Est. 2023</p>
-            </div>
-          </Link>
-
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex space-x-8">
-            {navigation.map((item) => (
-              <Link
-                key={item.name}
-                to={item.href}
-                className={`font-medium transition-colors duration-300 ${
-                  isActive(item.href)
-                    ? "text-rhino-red border-b-2 border-rhino-red pb-1"
-                    : "text-rhino-blue hover:text-rhino-red"
+    <>
+      <header className={`bg-white sticky top-0 z-40 transition-all duration-300 ${
+        isScrolled ? 'shadow-lg py-2' : 'shadow-md py-4'
+      }`}>
+        <div className="container mx-auto px-4">
+          <div className="flex justify-between items-center">
+            {/* Logo */}
+            <Link to="/" className="flex items-center space-x-3 group">
+              <img 
+                src="/lovable-uploads/6c39d309-610c-4c6d-8c26-4de7cddfd60a.png" 
+                alt="Nepalese Rhinos FC" 
+                className={`transition-all duration-300 group-hover:scale-105 ${
+                  isScrolled ? 'h-10 w-10' : 'h-12 w-12'
                 }`}
-              >
-                {item.name}
-              </Link>
-            ))}
-          </nav>
+              />
+              <div className="transition-all duration-300">
+                <h1 className={`font-bold text-rhino-blue transition-all duration-300 ${
+                  isScrolled ? 'text-lg' : 'text-xl'
+                }`}>
+                  Nepalese Rhinos FC
+                </h1>
+                <p className={`text-rhino-gray transition-all duration-300 ${
+                  isScrolled ? 'text-xs' : 'text-sm'
+                }`}>
+                  Est. 2023
+                </p>
+              </div>
+            </Link>
 
-          {/* Mobile Menu Button */}
-          <Button
-            variant="outline"
-            size="sm"
-            className="md:hidden"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-          >
-            {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
-          </Button>
-        </div>
-
-        {/* Mobile Navigation */}
-        {isMenuOpen && (
-          <nav className="md:hidden py-4 border-t">
-            <div className="flex flex-col space-y-3">
+            {/* Desktop Navigation */}
+            <nav className="hidden md:flex space-x-1">
               {navigation.map((item) => (
                 <Link
                   key={item.name}
                   to={item.href}
-                  className={`font-medium py-2 transition-colors duration-300 ${
+                  className={`relative px-4 py-2 font-medium transition-all duration-300 rounded-lg group ${
                     isActive(item.href)
                       ? "text-rhino-red"
-                      : "text-rhino-blue hover:text-rhino-red"
+                      : "text-rhino-blue hover:text-rhino-red hover:bg-rhino-red/5"
                   }`}
-                  onClick={() => setIsMenuOpen(false)}
                 >
                   {item.name}
+                  <span className={`absolute bottom-0 left-1/2 h-0.5 bg-rhino-red transition-all duration-300 transform -translate-x-1/2 ${
+                    isActive(item.href) 
+                      ? "w-full" 
+                      : "w-0 group-hover:w-full"
+                  }`} />
                 </Link>
               ))}
-            </div>
-          </nav>
-        )}
-      </div>
-    </header>
+            </nav>
+
+            {/* Mobile Menu Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="md:hidden text-rhino-blue hover:text-rhino-red hover:bg-rhino-red/5 transition-all duration-200"
+              onClick={() => setIsMenuOpen(true)}
+            >
+              <Menu size={24} />
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      {/* Mobile Sidebar */}
+      <MobileSidebar 
+        isOpen={isMenuOpen} 
+        onClose={() => setIsMenuOpen(false)} 
+      />
+    </>
   );
 };
 

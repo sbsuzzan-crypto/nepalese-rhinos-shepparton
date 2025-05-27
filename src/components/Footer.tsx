@@ -1,5 +1,6 @@
 
 import { Facebook, Instagram, Youtube } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
@@ -29,10 +30,26 @@ const Footer = () => {
             <div>
               <h4 className="font-bold mb-4">Quick Links</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#about" className="opacity-75 hover:opacity-100 transition-opacity">About Us</a></li>
-                <li><a href="#teams" className="opacity-75 hover:opacity-100 transition-opacity">Our Team</a></li>
-                <li><a href="#fixtures" className="opacity-75 hover:opacity-100 transition-opacity">Fixtures</a></li>
-                <li><a href="#join" className="opacity-75 hover:opacity-100 transition-opacity">Join Us</a></li>
+                <li>
+                  <Link to="/about" className="opacity-75 hover:opacity-100 hover:text-rhino-red transition-all duration-200">
+                    About Us
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/teams" className="opacity-75 hover:opacity-100 hover:text-rhino-red transition-all duration-200">
+                    Our Team
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/fixtures" className="opacity-75 hover:opacity-100 hover:text-rhino-red transition-all duration-200">
+                    Fixtures
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/join-us" className="opacity-75 hover:opacity-100 hover:text-rhino-red transition-all duration-200">
+                    Join Us
+                  </Link>
+                </li>
               </ul>
             </div>
 
@@ -51,13 +68,13 @@ const Footer = () => {
             <div>
               <h4 className="font-bold mb-4">Follow Us</h4>
               <div className="flex gap-3 mb-6">
-                <a href="#" className="text-white hover:text-rhino-red transition-colors">
+                <a href="#" className="text-white hover:text-rhino-red transition-colors duration-200 transform hover:scale-110">
                   <Facebook size={24} />
                 </a>
-                <a href="#" className="text-white hover:text-rhino-red transition-colors">
+                <a href="#" className="text-white hover:text-rhino-red transition-colors duration-200 transform hover:scale-110">
                   <Instagram size={24} />
                 </a>
-                <a href="#" className="text-white hover:text-rhino-red transition-colors">
+                <a href="#" className="text-white hover:text-rhino-red transition-colors duration-200 transform hover:scale-110">
                   <Youtube size={24} />
                 </a>
               </div>
@@ -73,9 +90,10 @@ const Footer = () => {
             <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm opacity-75">
               <p>&copy; 2024 Nepalese Rhinos FC. All rights reserved.</p>
               <div className="flex gap-6">
-                <a href="#" className="hover:opacity-100 transition-opacity">Privacy Policy</a>
-                <a href="#" className="hover:opacity-100 transition-opacity">Code of Conduct</a>
-                <a href="#" className="hover:opacity-100 transition-opacity">Child Safety</a>
+                <a href="#" className="hover:opacity-100 hover:text-rhino-red transition-all duration-200">Privacy Policy</a>
+                <a href="#" className="hover:opacity-100 hover:text-rhino-red transition-all duration-200">Code of Conduct</a>
+                <a href="#" className="hover:opacity-100 hover:text-rhino-red transition-all duration-200">Child Safety</a>
+                <Link to="/auth" className="hover:opacity-100 hover:text-rhino-red transition-all duration-200">Admin</Link>
               </div>
             </div>
           </div>
