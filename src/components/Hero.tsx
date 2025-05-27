@@ -15,19 +15,23 @@ const Hero = () => {
             Where passion meets tradition. Join our proud football community in Shepparton, bringing together Nepalese heritage and Australian spirit.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              size="lg" 
-              className="bg-rhino-red hover:bg-red-700 text-white px-8 py-6 text-lg font-semibold transition-all duration-300 transform hover:scale-105"
-            >
-              Join Our Club
-            </Button>
-            <Button 
-              variant="outline" 
-              size="lg" 
-              className="border-white text-white hover:bg-white hover:text-rhino-blue px-8 py-6 text-lg font-semibold transition-all duration-300"
-            >
-              View Fixtures
-            </Button>
+            <Link to="/join-us">
+              <Button 
+                size="lg" 
+                className="bg-rhino-red hover:bg-red-700 text-white px-8 py-6 text-lg font-semibold transition-all duration-300 transform hover:scale-105"
+              >
+                Join Our Club
+              </Button>
+            </Link>
+            <Link to="/fixtures">
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className="border-white text-white hover:bg-white hover:text-rhino-blue px-8 py-6 text-lg font-semibold transition-all duration-300"
+              >
+                View Fixtures
+              </Button>
+            </Link>
             <Link to="/auth">
               <Button 
                 variant="outline" 

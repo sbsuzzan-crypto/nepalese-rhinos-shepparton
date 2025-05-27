@@ -1,5 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Link } from "react-router-dom";
 
 const Teams = () => {
   const players = [
@@ -70,7 +71,7 @@ const Teams = () => {
 
           <div className="text-center mt-12">
             <p className="text-rhino-gray">
-              Interested in joining our squad? <a href="#join" className="text-rhino-red font-semibold hover:underline">Contact us today!</a>
+              Interested in joining our squad? <Link to="/join-us" className="text-rhino-red font-semibold hover:underline">Contact us today!</Link>
             </p>
           </div>
         </div>

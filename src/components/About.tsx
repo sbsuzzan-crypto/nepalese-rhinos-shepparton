@@ -1,6 +1,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Users, Target, Heart, Trophy } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const About = () => {
   const values = [
@@ -74,6 +75,15 @@ const About = () => {
                 </Card>
               ))}
             </div>
+          </div>
+
+          <div className="text-center mt-12">
+            <p className="text-rhino-gray mb-4">
+              Ready to join our football family?
+            </p>
+            <Link to="/join-us" className="text-rhino-red font-semibold hover:underline text-lg">
+              Join us today!
+            </Link>
           </div>
         </div>
       </div>

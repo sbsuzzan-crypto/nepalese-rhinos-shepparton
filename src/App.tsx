@@ -8,6 +8,12 @@ import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AdminLayout from "@/components/admin/AdminLayout";
 import Index from "./pages/Index";
+import About from "./pages/About";
+import Teams from "./pages/Teams";
+import Fixtures from "./pages/Fixtures";
+import Gallery from "./pages/Gallery";
+import JoinUs from "./pages/JoinUs";
+import Contact from "./pages/Contact";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/admin/Dashboard";
 import NotFound from "./pages/NotFound";
@@ -23,6 +29,12 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/teams" element={<Teams />} />
+            <Route path="/fixtures" element={<Fixtures />} />
+            <Route path="/gallery" element={<Gallery />} />
+            <Route path="/join-us" element={<JoinUs />} />
+            <Route path="/contact" element={<Contact />} />
             <Route path="/auth" element={<Auth />} />
             <Route 
               path="/admin" 
