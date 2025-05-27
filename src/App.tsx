@@ -23,6 +23,8 @@ import FixturesManagement from "./pages/admin/FixturesManagement";
 import GalleryManagement from "./pages/admin/GalleryManagement";
 import SponsorsManagement from "./pages/admin/SponsorsManagement";
 import MessagesManagement from "./pages/admin/MessagesManagement";
+import StaffManagement from "./pages/admin/StaffManagement";
+import UserManagement from "./pages/admin/UserManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -65,6 +67,22 @@ const App = () => (
               <Route path="gallery" element={<GalleryManagement />} />
               <Route path="sponsors" element={<SponsorsManagement />} />
               <Route path="messages" element={<MessagesManagement />} />
+              <Route 
+                path="staff" 
+                element={
+                  <ProtectedRoute requireAdmin={true}>
+                    <StaffManagement />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="users" 
+                element={
+                  <ProtectedRoute requireAdmin={true}>
+                    <UserManagement />
+                  </ProtectedRoute>
+                } 
+              />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

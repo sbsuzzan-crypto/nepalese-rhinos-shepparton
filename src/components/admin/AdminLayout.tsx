@@ -15,7 +15,9 @@ import {
   Trophy,
   MessageSquare,
   LogOut,
-  Settings
+  Settings,
+  UserCheck,
+  Shield
 } from 'lucide-react';
 
 const AdminLayout = () => {
@@ -26,10 +28,10 @@ const AdminLayout = () => {
   // Show loading state while checking authentication
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rhino-red mx-auto mb-4"></div>
-          <p>Loading...</p>
+          <p className="text-gray-600">Loading admin panel...</p>
         </div>
       </div>
     );
@@ -63,7 +65,7 @@ const AdminLayout = () => {
                 <strong>Role:</strong> {profile?.role || 'Pending'}
               </p>
               <p className="text-sm text-gray-700">
-                <strong>Status:</strong> Pending Approval
+                <strong>Status:</strong> <span className="text-yellow-600">Pending Approval</span>
               </p>
             </div>
             <Button 
@@ -125,51 +127,84 @@ const AdminLayout = () => {
     }
   ];
 
+  // Add admin-only navigation items
+  if (isAdmin) {
+    navigation.push(
+      {
+        name: 'Staff',
+        href: '/admin/staff',
+        icon: Users,
+        current: location.pathname === '/admin/staff'
+      },
+      {
+        name: 'Users',
+        href: '/admin/users',
+        icon: UserCheck,
+        current: location.pathname === '/admin/users'
+      }
+    );
+  }
+
   const Sidebar = ({ className = '' }: { className?: string }) => (
     <div className={`flex flex-col h-full ${className}`}>
-      <div className="flex items-center gap-2 p-6 border-b">
-        <div className="w-8 h-8 bg-rhino-red rounded-lg flex items-center justify-center">
-          <span className="text-white font-bold text-sm">NR</span>
+      <div className="flex items-center gap-3 p-6 border-b bg-gradient-to-r from-rhino-red to-red-700">
+        <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-md">
+          <span className="text-rhino-red font-bold text-lg">NR</span>
         </div>
-        <div>
+        <div className="text-white">
           <h2 className="font-bold text-lg">Nepalese Rhinos</h2>
-          <p className="text-sm text-gray-600">Admin Panel</p>
+          <p className="text-xs text-red-100">Admin Panel</p>
         </div>
       </div>
 
-      <nav className="flex-1 p-6">
-        <ul className="space-y-2">
+      <nav className="flex-1 p-4 bg-white">
+        <ul className="space-y-1">
           {navigation.map((item) => (
             <li key={item.name}>
               <Link
                 to={item.href}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                   item.current
-                    ? 'bg-rhino-red text-white'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-rhino-red text-white shadow-md'
+                    : 'text-gray-700 hover:bg-gray-100 hover:text-rhino-red'
                 }`}
               >
                 <item.icon className="w-5 h-5" />
                 {item.name}
+                {item.name === 'Users' && isAdmin && (
+                  <Badge variant="secondary" className="ml-auto text-xs">
+                    Admin
+                  </Badge>
+                )}
               </Link>
             </li>
           ))}
         </ul>
       </nav>
 
-      <div className="p-6 border-t">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-            <Users className="w-5 h-5 text-gray-600" />
+      <div className="p-4 border-t bg-gray-50">
+        <div className="flex items-center gap-3 mb-4 p-3 bg-white rounded-lg shadow-sm">
+          <div className="w-10 h-10 bg-gradient-to-br from-rhino-red to-red-700 rounded-full flex items-center justify-center">
+            <Users className="w-5 h-5 text-white" />
           </div>
-          <div className="flex-1">
-            <p className="font-medium text-sm">{profile?.full_name || user.email}</p>
+          <div className="flex-1 min-w-0">
+            <p className="font-medium text-sm text-gray-900 truncate">
+              {profile?.full_name || user.email}
+            </p>
             <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="text-xs">
+              <Badge 
+                variant={profile?.role === 'admin' ? 'destructive' : 'secondary'} 
+                className="text-xs"
+              >
+                {profile?.role === 'admin' && <Shield className="w-3 h-3 mr-1" />}
                 {profile?.role}
               </Badge>
-              {isAdmin && <Badge className="text-xs bg-rhino-red">Admin</Badge>}
+              {isAdmin && (
+                <Badge className="text-xs bg-green-600">
+                  Super Admin
+                </Badge>
+              )}
             </div>
           </div>
         </div>
@@ -177,7 +212,7 @@ const AdminLayout = () => {
           onClick={() => signOut()}
           variant="outline"
           size="sm"
-          className="w-full"
+          className="w-full hover:bg-red-50 hover:text-red-600 hover:border-red-200"
         >
           <LogOut className="w-4 h-4 mr-2" />
           Sign Out
@@ -194,7 +229,7 @@ const AdminLayout = () => {
           <Button
             variant="outline"
             size="icon"
-            className="fixed top-4 left-4 z-50 lg:hidden"
+            className="fixed top-4 left-4 z-50 lg:hidden bg-white shadow-md hover:bg-gray-50"
           >
             <Menu className="h-4 w-4" />
           </Button>
@@ -206,14 +241,14 @@ const AdminLayout = () => {
 
       {/* Desktop sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-80 lg:flex-col">
-        <div className="flex flex-col bg-white border-r border-gray-200 h-full">
+        <div className="flex flex-col bg-white border-r border-gray-200 h-full shadow-lg">
           <Sidebar />
         </div>
       </div>
 
       {/* Main content */}
       <div className="lg:pl-80">
-        <main className="py-10">
+        <main className="py-6">
           <div className="px-4 sm:px-6 lg:px-8">
             <Outlet />
           </div>

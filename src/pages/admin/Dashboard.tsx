@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Users, 
@@ -11,9 +10,13 @@ import {
   Image, 
   FileText,
   Trophy,
-  Plus
+  UserCheck,
+  UserX,
+  Activity,
+  TrendingUp
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import DashboardCard from '@/components/admin/DashboardCard';
+import QuickActionCard from '@/components/admin/QuickActionCard';
 
 const Dashboard = () => {
   const { profile, isAdmin } = useAuth();
@@ -23,7 +26,10 @@ const Dashboard = () => {
     fixtures: 0,
     gallery: 0,
     messages: 0,
-    sponsors: 0
+    sponsors: 0,
+    staff: 0,
+    pendingUsers: 0,
+    approvedUsers: 0
   });
 
   useEffect(() => {
@@ -35,15 +41,22 @@ const Dashboard = () => {
           { count: fixturesCount },
           { count: galleryCount },
           { count: messagesCount },
-          { count: sponsorsCount }
+          { count: sponsorsCount },
+          { count: staffCount },
+          { data: profiles }
         ] = await Promise.all([
           supabase.from('news').select('*', { count: 'exact', head: true }),
           supabase.from('players').select('*', { count: 'exact', head: true }),
           supabase.from('fixtures').select('*', { count: 'exact', head: true }),
           supabase.from('gallery').select('*', { count: 'exact', head: true }),
           supabase.from('contact_messages').select('*', { count: 'exact', head: true }),
-          supabase.from('sponsors').select('*', { count: 'exact', head: true })
+          supabase.from('sponsors').select('*', { count: 'exact', head: true }),
+          supabase.from('staff').select('*', { count: 'exact', head: true }),
+          supabase.from('profiles').select('*')
         ]);
+
+        const pendingUsers = profiles?.filter(p => !p.is_approved).length || 0;
+        const approvedUsers = profiles?.filter(p => p.is_approved).length || 0;
 
         setStats({
           news: newsCount || 0,
@@ -51,7 +64,10 @@ const Dashboard = () => {
           fixtures: fixturesCount || 0,
           gallery: galleryCount || 0,
           messages: messagesCount || 0,
-          sponsors: sponsorsCount || 0
+          sponsors: sponsorsCount || 0,
+          staff: staffCount || 0,
+          pendingUsers,
+          approvedUsers
         });
       } catch (error) {
         console.error('Error fetching stats:', error);
@@ -63,29 +79,29 @@ const Dashboard = () => {
 
   const quickActions = [
     {
-      title: 'Add News',
-      description: 'Create a new news article',
+      title: 'Create News Article',
+      description: 'Share the latest club news and match reports with supporters',
       href: '/admin/news',
       icon: FileText,
       color: 'bg-blue-500'
     },
     {
       title: 'Add Player',
-      description: 'Register a new player',
+      description: 'Register new squad members and update player profiles',
       href: '/admin/players',
       icon: Users,
       color: 'bg-green-500'
     },
     {
-      title: 'Add Fixture',
-      description: 'Schedule a new match',
+      title: 'Schedule Fixture',
+      description: 'Add upcoming matches and update fixture information',
       href: '/admin/fixtures',
       icon: Calendar,
       color: 'bg-purple-500'
     },
     {
-      title: 'Upload Photos',
-      description: 'Add images to gallery',
+      title: 'Upload Gallery',
+      description: 'Add match photos and team moments to the gallery',
       href: '/admin/gallery',
       icon: Image,
       color: 'bg-orange-500'
@@ -98,121 +114,198 @@ const Dashboard = () => {
       value: stats.news,
       icon: FileText,
       href: '/admin/news',
-      color: 'text-blue-600'
+      color: 'text-blue-600',
+      description: 'Published articles'
     },
     {
-      title: 'Players',
+      title: 'Active Players',
       value: stats.players,
       icon: Users,
       href: '/admin/players',
-      color: 'text-green-600'
+      color: 'text-green-600',
+      description: 'Squad members'
     },
     {
       title: 'Fixtures',
       value: stats.fixtures,
       icon: Calendar,
       href: '/admin/fixtures',
-      color: 'text-purple-600'
+      color: 'text-purple-600',
+      description: 'Total matches'
     },
     {
       title: 'Gallery Photos',
       value: stats.gallery,
       icon: Image,
       href: '/admin/gallery',
-      color: 'text-orange-600'
+      color: 'text-orange-600',
+      description: 'Media uploads'
     },
     {
       title: 'Messages',
       value: stats.messages,
       icon: MessageSquare,
       href: '/admin/messages',
-      color: 'text-red-600'
+      color: 'text-red-600',
+      description: 'Contact inquiries'
     },
     {
       title: 'Sponsors',
       value: stats.sponsors,
       icon: Trophy,
       href: '/admin/sponsors',
-      color: 'text-yellow-600'
+      color: 'text-yellow-600',
+      description: 'Active partnerships'
     }
   ];
 
+  if (isAdmin) {
+    statsCards.push(
+      {
+        title: 'Staff Members',
+        value: stats.staff,
+        icon: Users,
+        href: '/admin/staff',
+        color: 'text-indigo-600',
+        description: 'Team personnel'
+      },
+      {
+        title: 'Pending Approvals',
+        value: stats.pendingUsers,
+        icon: UserX,
+        href: '/admin/users',
+        color: 'text-orange-600',
+        description: 'Awaiting approval'
+      }
+    );
+  }
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">
-          Welcome to the Admin Dashboard
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-rhino-red to-red-700 rounded-lg p-6 text-white">
+        <h1 className="text-3xl font-bold mb-2">
+          Welcome back, {profile?.full_name || 'Admin'}!
         </h1>
-        <p className="text-gray-600 mt-2">
-          Manage your football club website content from here.
+        <p className="text-red-100">
+          Manage your football club website from this central dashboard.
         </p>
+        <div className="flex items-center gap-4 mt-4">
+          <div className="flex items-center gap-2">
+            <Activity className="h-4 w-4" />
+            <span className="text-sm">System Status: Online</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <TrendingUp className="h-4 w-4" />
+            <span className="text-sm">All services operational</span>
+          </div>
+        </div>
       </div>
 
       {/* Quick Actions */}
       <div>
-        <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
+        <h2 className="text-xl font-semibold mb-4 text-gray-900">Quick Actions</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {quickActions.map((action) => (
-            <Link key={action.title} to={action.href}>
-              <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${action.color} text-white`}>
-                      <action.icon className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <h3 className="font-medium">{action.title}</h3>
-                      <p className="text-sm text-gray-600">{action.description}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
+            <QuickActionCard key={action.title} {...action} />
           ))}
         </div>
       </div>
 
-      {/* Statistics */}
+      {/* Statistics Overview */}
       <div>
-        <h2 className="text-xl font-semibold mb-4">Content Overview</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <h2 className="text-xl font-semibold mb-4 text-gray-900">Content Overview</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {statsCards.map((stat) => (
-            <Link key={stat.title} to={stat.href}>
-              <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    {stat.title}
-                  </CardTitle>
-                  <stat.icon className={`h-4 w-4 ${stat.color}`} />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stat.value}</div>
-                </CardContent>
-              </Card>
-            </Link>
+            <DashboardCard key={stat.title} {...stat} />
           ))}
         </div>
       </div>
+
+      {/* Admin Features */}
+      {isAdmin && (
+        <div>
+          <h2 className="text-xl font-semibold mb-4 text-gray-900">Admin Features</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card className="border-l-4 border-l-blue-500">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <UserCheck className="h-5 w-5 text-blue-600" />
+                  User Management
+                </CardTitle>
+                <CardDescription>
+                  Manage user accounts and approval requests
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span>Approved Users:</span>
+                    <span className="font-medium text-green-600">{stats.approvedUsers}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Pending Approval:</span>
+                    <span className="font-medium text-orange-600">{stats.pendingUsers}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-l-4 border-l-purple-500">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-purple-600" />
+                  Staff Management
+                </CardTitle>
+                <CardDescription>
+                  Manage coaching staff and team personnel
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span>Total Staff:</span>
+                    <span className="font-medium">{stats.staff}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>System Access:</span>
+                    <span className="font-medium text-green-600">Full Control</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
 
       {/* User Role Information */}
-      <Card>
+      <Card className="bg-gray-50">
         <CardHeader>
-          <CardTitle>Your Access Level</CardTitle>
+          <CardTitle className="text-gray-900">Your Access Level</CardTitle>
           <CardDescription>
-            Current role: <span className="font-medium capitalize">{profile?.role}</span>
+            Current role: <span className="font-medium capitalize text-rhino-red">{profile?.role}</span>
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2 text-sm">
-            <p>✅ Create and manage content</p>
-            <p>✅ View contact messages</p>
-            <p>✅ Upload gallery images</p>
-            {isAdmin && (
-              <>
-                <p>✅ Manage user accounts</p>
-                <p>✅ Access site settings</p>
-              </>
-            )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div className="space-y-2">
+              <h4 className="font-medium text-gray-900">Content Management</h4>
+              <p className="text-green-600">✅ Create and edit news articles</p>
+              <p className="text-green-600">✅ Manage player profiles</p>
+              <p className="text-green-600">✅ Update fixtures and results</p>
+              <p className="text-green-600">✅ Upload gallery images</p>
+            </div>
+            <div className="space-y-2">
+              <h4 className="font-medium text-gray-900">Communication</h4>
+              <p className="text-green-600">✅ View contact messages</p>
+              <p className="text-green-600">✅ Manage sponsor information</p>
+              {isAdmin && (
+                <>
+                  <p className="text-green-600">✅ Approve user accounts</p>
+                  <p className="text-green-600">✅ Manage staff members</p>
+                </>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
