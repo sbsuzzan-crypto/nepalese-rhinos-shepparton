@@ -59,7 +59,7 @@ function App() {
               <Route path="/gallery/all" element={<AllGallery />} />
               <Route path="/gallery/:id" element={<GalleryPage />} />
               <Route path="/contact" element={<Contact />} />
-              <Route path="/join" element={<JoinUs />} />
+              <Route path="/join-us" element={<JoinUs />} />
               <Route path="/auth" element={<Auth />} />
               
               {/* Admin routes */}
