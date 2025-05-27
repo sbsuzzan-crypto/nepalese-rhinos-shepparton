@@ -36,22 +36,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Users, Plus, Edit, Trash2, Mail, Phone, Building } from 'lucide-react';
+import { Users, Plus, Edit, Trash2, Building } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import type { Tables } from '@/integrations/supabase/types';
 
-interface StaffMember {
-  id: string;
-  name: string;
-  position: string;
-  email: string;
-  phone?: string;
-  bio?: string;
-  image_url?: string;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-}
+// Use the actual database schema type
+type StaffMember = Tables<'staff'>;
 
 const StaffManagement = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -68,12 +59,18 @@ const StaffManagement = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as StaffMember[];
+      return data;
     },
   });
 
   const addStaffMutation = useMutation({
-    mutationFn: async (staffData: Omit<StaffMember, 'id' | 'created_at' | 'updated_at'>) => {
+    mutationFn: async (staffData: {
+      name: string;
+      role: string;
+      bio?: string;
+      photo_url?: string;
+      is_active: boolean;
+    }) => {
       const { error } = await supabase
         .from('staff')
         .insert([staffData]);
@@ -135,11 +132,9 @@ const StaffManagement = () => {
     
     const staffData = {
       name: formData.get('name') as string,
-      position: formData.get('position') as string,
-      email: formData.get('email') as string,
-      phone: formData.get('phone') as string || undefined,
+      role: formData.get('role') as string,
       bio: formData.get('bio') as string || undefined,
-      image_url: formData.get('image_url') as string || undefined,
+      photo_url: formData.get('photo_url') as string || undefined,
       is_active: true,
     };
 
@@ -197,38 +192,21 @@ const StaffManagement = () => {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="position">Position</Label>
+                  <Label htmlFor="role">Role</Label>
                   <Input
-                    id="position"
-                    name="position"
-                    defaultValue={editingStaff?.position}
+                    id="role"
+                    name="role"
+                    defaultValue={editingStaff?.role}
+                    placeholder="e.g., Manager, Coach, Assistant"
                     required
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="photo_url">Photo URL (Optional)</Label>
                   <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    defaultValue={editingStaff?.email}
-                    required
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="phone">Phone (Optional)</Label>
-                  <Input
-                    id="phone"
-                    name="phone"
-                    defaultValue={editingStaff?.phone}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="image_url">Photo URL (Optional)</Label>
-                  <Input
-                    id="image_url"
-                    name="image_url"
-                    defaultValue={editingStaff?.image_url}
+                    id="photo_url"
+                    name="photo_url"
+                    defaultValue={editingStaff?.photo_url || ''}
                   />
                 </div>
                 <div className="grid gap-2">
@@ -236,7 +214,7 @@ const StaffManagement = () => {
                   <Textarea
                     id="bio"
                     name="bio"
-                    defaultValue={editingStaff?.bio}
+                    defaultValue={editingStaff?.bio || ''}
                     rows={3}
                   />
                 </div>
@@ -310,8 +288,7 @@ const StaffManagement = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
-                  <TableHead>Position</TableHead>
-                  <TableHead>Contact</TableHead>
+                  <TableHead>Role</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Added</TableHead>
                   <TableHead>Actions</TableHead>
@@ -322,9 +299,9 @@ const StaffManagement = () => {
                   <TableRow key={member.id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        {member.image_url ? (
+                        {member.photo_url ? (
                           <img 
-                            src={member.image_url} 
+                            src={member.photo_url} 
                             alt={member.name}
                             className="w-10 h-10 rounded-full object-cover"
                           />
@@ -344,21 +321,7 @@ const StaffManagement = () => {
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Building className="w-4 h-4 text-slate-400" />
-                        <span className="font-medium">{member.position}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2 text-sm">
-                          <Mail className="w-3 h-3 text-slate-400" />
-                          <span>{member.email}</span>
-                        </div>
-                        {member.phone && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <Phone className="w-3 h-3 text-slate-400" />
-                            <span>{member.phone}</span>
-                          </div>
-                        )}
+                        <span className="font-medium">{member.role}</span>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -368,7 +331,7 @@ const StaffManagement = () => {
                     </TableCell>
                     <TableCell>
                       <span className="text-sm text-slate-600">
-                        {format(new Date(member.created_at), 'MMM dd, yyyy')}
+                        {member.created_at ? format(new Date(member.created_at), 'MMM dd, yyyy') : 'N/A'}
                       </span>
                     </TableCell>
                     <TableCell>

@@ -129,6 +129,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error('Sign out error:', error);
+        throw error;
       } else {
         console.log('Successfully signed out');
         // Force reload to ensure clean state
@@ -138,6 +139,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('Sign out error:', error);
       // Force reload even on error to ensure clean state
       window.location.href = '/auth';
+      throw error;
     }
   };
 
