@@ -1,5 +1,6 @@
 
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const Hero = () => {
   return (
@@ -27,6 +28,15 @@ const Hero = () => {
             >
               View Fixtures
             </Button>
+            <Link to="/auth">
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className="border-white text-white hover:bg-white hover:text-rhino-blue px-8 py-6 text-lg font-semibold transition-all duration-300"
+              >
+                Admin Login
+              </Button>
+            </Link>
           </div>
         </div>
       </div>
