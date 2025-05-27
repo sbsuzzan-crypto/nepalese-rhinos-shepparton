@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -34,7 +33,7 @@ const PlayersManagement = () => {
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
-    position: 'forward' as const,
+    position: 'forward' as 'goalkeeper' | 'defender' | 'midfielder' | 'forward',
     jersey_number: '',
     bio: '',
     photo_url: '',
@@ -250,7 +249,7 @@ const PlayersManagement = () => {
                   <Label htmlFor="position">Position</Label>
                   <Select
                     value={formData.position}
-                    onValueChange={(value) => setFormData({ ...formData, position: value as any })}
+                    onValueChange={(value) => setFormData({ ...formData, position: value as 'goalkeeper' | 'defender' | 'midfielder' | 'forward' })}
                   >
                     <SelectTrigger>
                       <SelectValue />
