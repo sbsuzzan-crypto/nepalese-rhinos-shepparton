@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Camera, Calendar } from "lucide-react";
 import { format } from "date-fns";
+import { Link } from "react-router-dom";
 
 interface GalleryItem {
   id: string;
@@ -153,9 +153,11 @@ const Gallery = () => {
           )}
 
           <div className="text-center mt-12">
-            <button className="bg-rhino-red text-white px-8 py-3 rounded-lg font-semibold hover:bg-red-700 transition-colors">
-              View Full Gallery
-            </button>
+            <Link to="/gallery">
+              <button className="bg-rhino-red text-white px-8 py-3 rounded-lg font-semibold hover:bg-red-700 transition-colors">
+                View Full Gallery
+              </button>
+            </Link>
           </div>
         </div>
       </div>

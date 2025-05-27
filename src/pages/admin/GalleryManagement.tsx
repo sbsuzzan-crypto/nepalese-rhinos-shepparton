@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -9,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import GalleryForm from '@/components/admin/gallery/GalleryForm';
 import GalleryItemCard from '@/components/admin/gallery/GalleryItemCard';
 import GalleryEmptyState from '@/components/admin/gallery/GalleryEmptyState';
+import GalleryFilters from '@/components/admin/gallery/GalleryFilters';
 import type { Database } from '@/integrations/supabase/types';
 
 type GalleryCategory = Database['public']['Enums']['gallery_category'];
@@ -29,6 +29,9 @@ const GalleryManagement = () => {
   const [loading, setLoading] = useState(true);
   const [editingItem, setEditingItem] = useState<GalleryItem | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<GalleryCategory | 'all'>('all');
+  const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -56,6 +59,27 @@ const GalleryManagement = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const filteredItems = useMemo(() => {
+    return galleryItems.filter(item => {
+      const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           (item.description && item.description.toLowerCase().includes(searchTerm.toLowerCase()));
+      
+      const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
+      
+      const matchesFeatured = !showFeaturedOnly || item.is_featured === true;
+      
+      return matchesSearch && matchesCategory && matchesFeatured;
+    });
+  }, [galleryItems, searchTerm, selectedCategory, showFeaturedOnly]);
+
+  const hasActiveFilters = searchTerm !== '' || selectedCategory !== 'all' || showFeaturedOnly;
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setSelectedCategory('all');
+    setShowFeaturedOnly(false);
   };
 
   const handleSubmit = async (formData: {
@@ -190,19 +214,46 @@ const GalleryManagement = () => {
         />
       )}
 
-      {galleryItems.length === 0 ? (
-        <GalleryEmptyState onAddImage={handleAddImage} />
+      <GalleryFilters
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        selectedCategory={selectedCategory}
+        onCategoryChange={setSelectedCategory}
+        showFeaturedOnly={showFeaturedOnly}
+        onFeaturedToggle={() => setShowFeaturedOnly(!showFeaturedOnly)}
+        onClearFilters={clearFilters}
+        hasActiveFilters={hasActiveFilters}
+      />
+
+      {filteredItems.length === 0 ? (
+        galleryItems.length === 0 ? (
+          <GalleryEmptyState onAddImage={handleAddImage} />
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-gray-500 text-lg">No items match your current filters.</p>
+            <Button variant="outline" onClick={clearFilters} className="mt-4">
+              Clear Filters
+            </Button>
+          </div>
+        )
       ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {galleryItems.map((item) => (
-            <GalleryItemCard
-              key={item.id}
-              item={item}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-            />
-          ))}
-        </div>
+        <>
+          <div className="flex justify-between items-center">
+            <p className="text-sm text-gray-600">
+              Showing {filteredItems.length} of {galleryItems.length} items
+            </p>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredItems.map((item) => (
+              <GalleryItemCard
+                key={item.id}
+                item={item}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

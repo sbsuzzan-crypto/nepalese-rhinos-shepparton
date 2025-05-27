@@ -13,6 +13,7 @@ import About from "./pages/About";
 import Teams from "./pages/Teams";
 import Fixtures from "./pages/Fixtures";
 import Gallery from "./pages/Gallery";
+import GalleryPage from "./pages/GalleryPage";
 import JoinUs from "./pages/JoinUs";
 import Contact from "./pages/Contact";
 import Auth from "./pages/Auth";
@@ -58,6 +59,7 @@ const App = () => (
             <Route path="/teams" element={<Teams />} />
             <Route path="/fixtures" element={<Fixtures />} />
             <Route path="/gallery" element={<Gallery />} />
+            <Route path="/gallery/full" element={<GalleryPage />} />
             <Route path="/join-us" element={<JoinUs />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/auth" element={<Auth />} />
