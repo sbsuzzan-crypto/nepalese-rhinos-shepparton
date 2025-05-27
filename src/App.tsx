@@ -21,6 +21,8 @@ import NewsManagement from "./pages/admin/NewsManagement";
 import PlayersManagement from "./pages/admin/PlayersManagement";
 import FixturesManagement from "./pages/admin/FixturesManagement";
 import GalleryManagement from "./pages/admin/GalleryManagement";
+import SponsorsManagement from "./pages/admin/SponsorsManagement";
+import MessagesManagement from "./pages/admin/MessagesManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -61,6 +63,8 @@ const App = () => (
               <Route path="players" element={<PlayersManagement />} />
               <Route path="fixtures" element={<FixturesManagement />} />
               <Route path="gallery" element={<GalleryManagement />} />
+              <Route path="sponsors" element={<SponsorsManagement />} />
+              <Route path="messages" element={<MessagesManagement />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
