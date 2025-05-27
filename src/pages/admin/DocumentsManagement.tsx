@@ -41,6 +41,7 @@ import { FileText, Plus, Edit, Trash2, Download, Eye, Calendar } from 'lucide-re
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { useForm } from 'react-hook-form';
+import FileUpload from '@/components/admin/FileUpload';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Document = Tables<'documents'>;

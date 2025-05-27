@@ -1,4 +1,3 @@
-
 import { useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -127,11 +126,21 @@ const FileUpload = ({
     const files = e.dataTransfer.files;
     if (files && files[0]) {
       const file = files[0];
-      // Simulate file input change
-      const event = {
-        target: { files: [file] }
-      } as React.ChangeEvent<HTMLInputElement>;
-      handleFileSelect(event);
+      // Create a proper FileList object and trigger the file select handler
+      const fileInput = fileInputRef.current;
+      if (fileInput) {
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        fileInput.files = dataTransfer.files;
+        
+        // Create a proper change event
+        const changeEvent = new Event('change', { bubbles: true });
+        Object.defineProperty(changeEvent, 'target', {
+          writable: false,
+          value: fileInput
+        });
+        fileInput.dispatchEvent(changeEvent);
+      }
     }
   };
 

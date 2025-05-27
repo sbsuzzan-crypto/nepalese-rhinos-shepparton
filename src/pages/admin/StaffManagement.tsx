@@ -38,6 +38,7 @@ import {
 import { Users, Plus, Edit, Trash2, Building } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import FileUpload from '@/components/admin/FileUpload';
 import type { Tables } from '@/integrations/supabase/types';
 
 // Use the actual database schema type
