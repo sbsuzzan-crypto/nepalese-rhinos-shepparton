@@ -89,6 +89,36 @@ export type Database = {
         }
         Relationships: []
       }
+      contact_submissions: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          is_read: boolean | null
+          message: string
+          name: string
+          subject: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id?: string
+          is_read?: boolean | null
+          message: string
+          name: string
+          subject: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          name?: string
+          subject?: string
+        }
+        Relationships: []
+      }
       documents: {
         Row: {
           category: string | null
@@ -268,6 +298,81 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      join_submissions: {
+        Row: {
+          created_at: string | null
+          email: string
+          experience_level: string | null
+          id: string
+          message: string | null
+          name: string
+          phone: string | null
+          position_interest: string
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          experience_level?: string | null
+          id?: string
+          message?: string | null
+          name: string
+          phone?: string | null
+          position_interest: string
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          experience_level?: string | null
+          id?: string
+          message?: string | null
+          name?: string
+          phone?: string | null
+          position_interest?: string
+          status?: string | null
+        }
+        Relationships: []
+      }
+      news: {
+        Row: {
+          author_id: string | null
+          content: string
+          created_at: string | null
+          excerpt: string | null
+          featured_image_url: string | null
+          id: string
+          is_published: boolean | null
+          published_at: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          author_id?: string | null
+          content: string
+          created_at?: string | null
+          excerpt?: string | null
+          featured_image_url?: string | null
+          id?: string
+          is_published?: boolean | null
+          published_at?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          author_id?: string | null
+          content?: string
+          created_at?: string | null
+          excerpt?: string | null
+          featured_image_url?: string | null
+          id?: string
+          is_published?: boolean | null
+          published_at?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       players: {
         Row: {

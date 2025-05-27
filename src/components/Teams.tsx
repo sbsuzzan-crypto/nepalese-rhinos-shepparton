@@ -1,22 +1,78 @@
 
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Link } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Users, Star, Award } from "lucide-react";
+
+interface Player {
+  id: string;
+  name: string;
+  position: string;
+  jersey_number: number | null;
+  bio: string | null;
+  photo_url: string | null;
+}
+
+interface Staff {
+  id: string;
+  name: string;
+  role: string;
+  bio: string | null;
+  photo_url: string | null;
+}
 
 const Teams = () => {
-  const players = [
-    { name: "Rajesh Shrestha", position: "Goalkeeper", number: 1 },
-    { name: "Bikash Tamang", position: "Defender", number: 3 },
-    { name: "Pradeep Gurung", position: "Midfielder", number: 8 },
-    { name: "Sunil Rai", position: "Forward", number: 10 },
-    { name: "Nabin Thapa", position: "Defender", number: 5 },
-    { name: "Deepak Limbu", position: "Midfielder", number: 7 },
-  ];
+  const { data: players, isLoading: playersLoading } = useQuery({
+    queryKey: ['players'],
+    queryFn: async () => {
+      console.log('Fetching players from Supabase...');
+      const { data, error } = await supabase
+        .from('players')
+        .select('*')
+        .eq('is_active', true)
+        .order('jersey_number', { ascending: true });
+      
+      if (error) {
+        console.error('Error fetching players:', error);
+        throw error;
+      }
+      
+      console.log('Players fetched successfully:', data);
+      return data as Player[];
+    },
+  });
 
-  const staff = [
-    { name: "Coach Kumar Magar", role: "Head Coach" },
-    { name: "Pemba Sherpa", role: "Assistant Coach" },
-    { name: "Dr. Sarah Johnson", role: "Team Physio" },
-  ];
+  const { data: staff, isLoading: staffLoading } = useQuery({
+    queryKey: ['staff'],
+    queryFn: async () => {
+      console.log('Fetching staff from Supabase...');
+      const { data, error } = await supabase
+        .from('staff')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: true });
+      
+      if (error) {
+        console.error('Error fetching staff:', error);
+        throw error;
+      }
+      
+      console.log('Staff fetched successfully:', data);
+      return data as Staff[];
+    },
+  });
+
+  const getPositionBadgeColor = (position: string) => {
+    switch (position.toLowerCase()) {
+      case 'goalkeeper': return 'bg-yellow-500';
+      case 'defender': return 'bg-blue-500';
+      case 'midfielder': return 'bg-green-500';
+      case 'forward': return 'bg-red-500';
+      default: return 'bg-gray-500';
+    }
+  };
 
   return (
     <section id="teams" className="py-16 bg-white">
@@ -24,55 +80,110 @@ const Teams = () => {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-rhino-blue mb-4">Our Team</h2>
-            <p className="text-rhino-gray text-lg">Meet the players and staff who make Nepalese Rhinos FC great</p>
+            <p className="text-rhino-gray text-lg">Meet the talented players and dedicated staff who make Nepalese Rhinos FC proud</p>
           </div>
 
-          {/* Coaching Staff */}
+          {/* Players Section */}
           <div className="mb-16">
-            <h3 className="text-2xl font-bold text-rhino-blue mb-8 text-center">Coaching Staff</h3>
-            <div className="grid md:grid-cols-3 gap-6">
-              {staff.map((member, index) => (
-                <Card key={index} className="text-center hover:shadow-lg transition-shadow duration-300">
-                  <CardContent className="p-6">
-                    <div className="w-24 h-24 bg-rhino-blue rounded-full mx-auto mb-4 flex items-center justify-center">
-                      <span className="text-white text-2xl font-bold">
-                        {member.name.split(' ').map(n => n[0]).join('')}
-                      </span>
-                    </div>
-                    <h4 className="text-xl font-bold text-rhino-blue">{member.name}</h4>
-                    <p className="text-rhino-gray">{member.role}</p>
-                  </CardContent>
-                </Card>
-              ))}
+            <div className="flex items-center gap-2 mb-8">
+              <Users className="text-rhino-red" size={24} />
+              <h3 className="text-2xl font-bold text-rhino-blue">Players</h3>
             </div>
-          </div>
-
-          {/* Players */}
-          <div>
-            <h3 className="text-2xl font-bold text-rhino-blue mb-8 text-center">Senior Squad</h3>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {players.map((player, index) => (
-                <Card key={index} className="hover:shadow-lg transition-shadow duration-300">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg text-rhino-blue">{player.name}</CardTitle>
-                      <div className="w-10 h-10 bg-rhino-red text-white rounded-full flex items-center justify-center font-bold">
-                        {player.number}
+            
+            {playersLoading ? (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {Array.from({ length: 8 }).map((_, index) => (
+                  <Card key={index}>
+                    <CardContent className="p-6">
+                      <Skeleton className="w-full h-48 mb-4 rounded-lg" />
+                      <Skeleton className="h-6 w-3/4 mb-2" />
+                      <Skeleton className="h-4 w-1/2 mb-2" />
+                      <Skeleton className="h-4 w-full" />
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : players && players.length > 0 ? (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {players.map((player) => (
+                  <Card key={player.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                    <CardContent className="p-6">
+                      <div className="relative mb-4">
+                        <img 
+                          src={player.photo_url || 'https://images.unsplash.com/photo-1472745942893-4b9f730c7668?w=300&h=300&fit=crop&crop=face'}
+                          alt={player.name}
+                          className="w-full h-48 object-cover rounded-lg"
+                        />
+                        {player.jersey_number && (
+                          <div className="absolute top-2 right-2 bg-rhino-red text-white text-lg font-bold w-8 h-8 rounded-full flex items-center justify-center">
+                            {player.jersey_number}
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-rhino-gray font-medium">{player.position}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                      <h4 className="font-bold text-lg text-rhino-blue mb-2">{player.name}</h4>
+                      <Badge className={`${getPositionBadgeColor(player.position)} text-white mb-2`}>
+                        {player.position}
+                      </Badge>
+                      {player.bio && (
+                        <p className="text-sm text-rhino-gray">{player.bio}</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center text-rhino-gray">
+                <p>No players available at the moment.</p>
+              </div>
+            )}
           </div>
 
-          <div className="text-center mt-12">
-            <p className="text-rhino-gray">
-              Interested in joining our squad? <Link to="/join-us" className="text-rhino-red font-semibold hover:underline">Contact us today!</Link>
-            </p>
+          {/* Staff Section */}
+          <div>
+            <div className="flex items-center gap-2 mb-8">
+              <Award className="text-rhino-red" size={24} />
+              <h3 className="text-2xl font-bold text-rhino-blue">Coaching Staff</h3>
+            </div>
+            
+            {staffLoading ? (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <Card key={index}>
+                    <CardContent className="p-6">
+                      <Skeleton className="w-full h-40 mb-4 rounded-lg" />
+                      <Skeleton className="h-6 w-3/4 mb-2" />
+                      <Skeleton className="h-4 w-1/2 mb-2" />
+                      <Skeleton className="h-4 w-full" />
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : staff && staff.length > 0 ? (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {staff.map((member) => (
+                  <Card key={member.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                    <CardContent className="p-6">
+                      <img 
+                        src={member.photo_url || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop&crop=face'}
+                        alt={member.name}
+                        className="w-full h-40 object-cover rounded-lg mb-4"
+                      />
+                      <h4 className="font-bold text-lg text-rhino-blue mb-2">{member.name}</h4>
+                      <Badge variant="outline" className="text-rhino-red border-rhino-red mb-2">
+                        {member.role}
+                      </Badge>
+                      {member.bio && (
+                        <p className="text-sm text-rhino-gray">{member.bio}</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center text-rhino-gray">
+                <p>No staff information available at the moment.</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

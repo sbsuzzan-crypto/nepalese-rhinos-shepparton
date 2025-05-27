@@ -1,72 +1,141 @@
 
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Calendar, ArrowRight } from "lucide-react";
+import { format } from "date-fns";
+
+interface NewsItem {
+  id: string;
+  title: string;
+  content: string;
+  excerpt: string | null;
+  featured_image_url: string | null;
+  published_at: string;
+  created_at: string;
+}
 
 const LatestNews = () => {
-  const news = [
-    {
-      id: 1,
-      title: "Season Registration Now Open",
-      excerpt: "Join us for the 2024 season! Registration is now open for new and returning players.",
-      date: "May 25, 2024",
-      image: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=400&h=250&fit=crop"
+  const { data: news, isLoading, error } = useQuery({
+    queryKey: ['latest-news'],
+    queryFn: async () => {
+      console.log('Fetching latest news from Supabase...');
+      const { data, error } = await supabase
+        .from('news')
+        .select('*')
+        .eq('is_published', true)
+        .order('published_at', { ascending: false })
+        .limit(6);
+      
+      if (error) {
+        console.error('Error fetching news:', error);
+        throw error;
+      }
+      
+      console.log('News fetched successfully:', data);
+      return data as NewsItem[];
     },
-    {
-      id: 2,
-      title: "Victory Against Mooroopna FC",
-      excerpt: "Fantastic 3-1 victory in our home match last weekend. Great team performance!",
-      date: "May 20, 2024",
-      image: "https://images.unsplash.com/photo-1472745942893-4b9f730c7668?w=400&h=250&fit=crop"
-    },
-    {
-      id: 3,
-      title: "Community BBQ Success",
-      excerpt: "Thank you to everyone who attended our community BBQ fundraiser. Over $2000 raised!",
-      date: "May 15, 2024",
-      image: "https://images.unsplash.com/photo-1466637574441-749b8f19452f?w=400&h=250&fit=crop"
+  });
+
+  const formatDate = (dateString: string) => {
+    try {
+      return format(new Date(dateString), "MMM d, yyyy");
+    } catch {
+      return "Recent";
     }
-  ];
+  };
+
+  if (error) {
+    return (
+      <section id="news" className="py-16 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-rhino-blue mb-4">Latest News</h2>
+              <p className="text-rhino-gray text-lg">Stay updated with the latest from Nepalese Rhinos FC</p>
+            </div>
+            <div className="text-center text-red-600">
+              <p>Unable to load news. Please try again later.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
-    <section className="py-16 bg-white">
+    <section id="news" className="py-16 bg-gray-50">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-rhino-blue mb-4">Latest Updates</h2>
-          <p className="text-rhino-gray text-lg">Stay up to date with club news and announcements</p>
-        </div>
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-rhino-blue mb-4">Latest News</h2>
+            <p className="text-rhino-gray text-lg">Stay updated with the latest from Nepalese Rhinos FC</p>
+          </div>
 
-        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          {news.map((item) => (
-            <Card key={item.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
-              <div className="aspect-video overflow-hidden">
-                <img 
-                  src={item.image} 
-                  alt={item.title}
-                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                />
-              </div>
-              <CardHeader>
-                <div className="flex items-center gap-2 text-sm text-rhino-gray mb-2">
-                  <Calendar size={16} />
-                  <span>{item.date}</span>
-                </div>
-                <CardTitle className="text-xl text-rhino-blue">{item.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-rhino-gray mb-4">{item.excerpt}</p>
-                <Button variant="outline" className="w-full border-rhino-blue text-rhino-blue hover:bg-rhino-blue hover:text-white">
-                  Read More
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+          {isLoading ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <Card key={index} className="overflow-hidden">
+                  <Skeleton className="w-full h-48" />
+                  <CardHeader>
+                    <Skeleton className="h-6 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                  </CardHeader>
+                  <CardContent>
+                    <Skeleton className="h-4 w-full mb-2" />
+                    <Skeleton className="h-4 w-3/4" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : news && news.length > 0 ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {news.map((article, index) => (
+                <Card key={article.id} className={`overflow-hidden hover:shadow-lg transition-shadow cursor-pointer ${index === 0 ? 'md:col-span-2 lg:col-span-1' : ''}`}>
+                  <div className="relative">
+                    <img 
+                      src={article.featured_image_url || 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=600&h=400&fit=crop'}
+                      alt={article.title}
+                      className="w-full h-48 object-cover"
+                    />
+                    <div className="absolute top-4 left-4">
+                      <Badge className="bg-rhino-red text-white">News</Badge>
+                    </div>
+                  </div>
+                  <CardHeader>
+                    <div className="flex items-center gap-2 text-sm text-rhino-gray mb-2">
+                      <Calendar size={14} />
+                      <span>{formatDate(article.published_at || article.created_at)}</span>
+                    </div>
+                    <CardTitle className="text-lg hover:text-rhino-red transition-colors line-clamp-2">
+                      {article.title}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-rhino-gray mb-4 line-clamp-3">
+                      {article.excerpt || article.content.substring(0, 150) + '...'}
+                    </p>
+                    <div className="flex items-center text-rhino-red font-semibold hover:text-rhino-blue transition-colors">
+                      <span>Read More</span>
+                      <ArrowRight size={16} className="ml-2" />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center text-rhino-gray">
+              <p>No news available at the moment.</p>
+            </div>
+          )}
 
-        <div className="text-center mt-12">
-          <Button className="bg-rhino-blue hover:bg-rhino-navy text-white px-8 py-3">
-            View All Updates
-          </Button>
+          <div className="text-center mt-12">
+            <button className="bg-rhino-red text-white px-8 py-3 rounded-lg font-semibold hover:bg-red-700 transition-colors">
+              View All News
+            </button>
+          </div>
         </div>
       </div>
     </section>
