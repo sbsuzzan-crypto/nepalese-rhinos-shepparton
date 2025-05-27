@@ -9,6 +9,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { 
   Table, 
   TableBody, 
   TableCell, 
@@ -43,10 +50,12 @@ import { format } from 'date-fns';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Announcement = Tables<'announcements'>;
+type AnnouncementCategory = 'news' | 'match_result' | 'player_update' | 'club_event' | 'general';
 
 const AnnouncementsManagement = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<AnnouncementCategory>('general');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -68,16 +77,16 @@ const AnnouncementsManagement = () => {
       title: string;
       content: string;
       excerpt?: string;
-      category: string;
+      category: AnnouncementCategory;
       is_published: boolean;
       featured_image_url?: string;
     }) => {
       const { error } = await supabase
         .from('announcements')
-        .insert([{
+        .insert({
           ...announcementData,
           published_at: announcementData.is_published ? new Date().toISOString() : null,
-        }]);
+        });
 
       if (error) throw error;
     },
@@ -141,7 +150,7 @@ const AnnouncementsManagement = () => {
       title: formData.get('title') as string,
       content: formData.get('content') as string,
       excerpt: formData.get('excerpt') as string || undefined,
-      category: formData.get('category') as string,
+      category: selectedCategory,
       is_published: formData.get('is_published') === 'on',
       featured_image_url: formData.get('featured_image_url') as string || undefined,
     };
@@ -155,6 +164,7 @@ const AnnouncementsManagement = () => {
 
   const handleEdit = (announcement: Announcement) => {
     setEditingAnnouncement(announcement);
+    setSelectedCategory((announcement.category as AnnouncementCategory) || 'general');
     setIsDialogOpen(true);
   };
 
@@ -210,12 +220,18 @@ const AnnouncementsManagement = () => {
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="category">Category</Label>
-                  <Input
-                    id="category"
-                    name="category"
-                    defaultValue={editingAnnouncement?.category || 'general'}
-                    placeholder="general, match, event, etc."
-                  />
+                  <Select value={selectedCategory} onValueChange={(value: AnnouncementCategory) => setSelectedCategory(value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="general">General</SelectItem>
+                      <SelectItem value="news">News</SelectItem>
+                      <SelectItem value="match_result">Match Result</SelectItem>
+                      <SelectItem value="player_update">Player Update</SelectItem>
+                      <SelectItem value="club_event">Club Event</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="featured_image_url">Featured Image URL</Label>
@@ -252,6 +268,7 @@ const AnnouncementsManagement = () => {
                   onClick={() => {
                     setIsDialogOpen(false);
                     setEditingAnnouncement(null);
+                    setSelectedCategory('general');
                   }}
                 >
                   Cancel
