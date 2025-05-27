@@ -10,6 +10,7 @@ import Teams from "./pages/Teams";
 import Fixtures from "./pages/Fixtures";
 import Gallery from "./pages/Gallery";
 import AllGallery from "./pages/AllGallery";
+import ViewAllGallery from "./pages/ViewAllGallery";
 import GalleryPage from "./pages/GalleryPage";
 import Contact from "./pages/Contact";
 import JoinUs from "./pages/JoinUs";
@@ -55,6 +56,7 @@ function App() {
             <Route path="/fixtures" element={<Fixtures />} />
             <Route path="/gallery" element={<Gallery />} />
             <Route path="/gallery/all" element={<AllGallery />} />
+            <Route path="/gallery/view-all" element={<ViewAllGallery />} />
             <Route path="/gallery/:id" element={<GalleryPage />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/join" element={<JoinUs />} />
