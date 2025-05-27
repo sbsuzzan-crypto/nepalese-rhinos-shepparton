@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Outlet, Link, useLocation, Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -110,110 +111,134 @@ const AdminLayout = () => {
     );
   }
 
-  const navigation = [
+  // Define navigation items with role-based access control
+  const baseNavigation = [
     {
       name: 'Dashboard',
       href: '/admin',
       icon: Home,
-      current: location.pathname === '/admin'
+      current: location.pathname === '/admin',
+      roles: ['admin', 'moderator'] // Both can access
     },
     {
       name: 'News',
       href: '/admin/news',
       icon: FileText,
-      current: location.pathname === '/admin/news'
+      current: location.pathname === '/admin/news',
+      roles: ['admin', 'moderator'] // Both can access
     },
     {
       name: 'Announcements',
       href: '/admin/announcements',
       icon: Megaphone,
-      current: location.pathname === '/admin/announcements'
+      current: location.pathname === '/admin/announcements',
+      roles: ['admin', 'moderator'] // Both can access
     },
     {
       name: 'Events',
       href: '/admin/events',
       icon: CalendarDays,
-      current: location.pathname === '/admin/events'
+      current: location.pathname === '/admin/events',
+      roles: ['admin', 'moderator'] // Both can access
     },
     {
       name: 'Players',
       href: '/admin/players',
       icon: Users,
-      current: location.pathname === '/admin/players'
+      current: location.pathname === '/admin/players',
+      roles: ['admin', 'moderator'] // Both can access
+    },
+    {
+      name: 'Teams',
+      href: '/admin/teams',
+      icon: Users,
+      current: location.pathname === '/admin/teams',
+      roles: ['admin', 'moderator'] // Both can access
     },
     {
       name: 'Fixtures',
       href: '/admin/fixtures',
       icon: Calendar,
-      current: location.pathname === '/admin/fixtures'
+      current: location.pathname === '/admin/fixtures',
+      roles: ['admin', 'moderator'] // Both can access
     },
     {
       name: 'Gallery',
       href: '/admin/gallery',
       icon: Image,
-      current: location.pathname === '/admin/gallery'
+      current: location.pathname === '/admin/gallery',
+      roles: ['admin', 'moderator'] // Both can access
     },
     {
       name: 'Sponsors',
       href: '/admin/sponsors',
       icon: Trophy,
-      current: location.pathname === '/admin/sponsors'
+      current: location.pathname === '/admin/sponsors',
+      roles: ['admin', 'moderator'] // Both can access
     },
     {
       name: 'Messages',
       href: '/admin/messages',
       icon: MessageSquare,
-      current: location.pathname === '/admin/messages'
+      current: location.pathname === '/admin/messages',
+      roles: ['admin', 'moderator'] // Both can access
     },
     {
       name: 'Supporters',
       href: '/admin/supporters-messages',
       icon: Heart,
-      current: location.pathname === '/admin/supporters-messages'
+      current: location.pathname === '/admin/supporters-messages',
+      roles: ['admin', 'moderator'] // Both can access
     },
     {
       name: 'Join Requests',
       href: '/admin/join-submissions',
       icon: UserCheck,
-      current: location.pathname === '/admin/join-submissions'
+      current: location.pathname === '/admin/join-submissions',
+      roles: ['admin', 'moderator'] // Both can access
     },
     {
       name: 'Contact Forms',
       href: '/admin/contact-submissions',
       icon: MessageSquare,
-      current: location.pathname === '/admin/contact-submissions'
+      current: location.pathname === '/admin/contact-submissions',
+      roles: ['admin', 'moderator'] // Both can access
     },
     {
       name: 'Documents',
       href: '/admin/documents',
       icon: FolderOpen,
-      current: location.pathname === '/admin/documents'
+      current: location.pathname === '/admin/documents',
+      roles: ['admin', 'moderator'] // Both can access
     },
     {
       name: 'Site Settings',
       href: '/admin/site-settings',
       icon: Settings,
-      current: location.pathname === '/admin/site-settings'
+      current: location.pathname === '/admin/site-settings',
+      roles: ['admin'] // Admin only
+    },
+    {
+      name: 'Staff',
+      href: '/admin/staff',
+      icon: Users,
+      current: location.pathname === '/admin/staff',
+      roles: ['admin'] // Admin only
+    },
+    {
+      name: 'Users',
+      href: '/admin/users',
+      icon: UserCheck,
+      current: location.pathname === '/admin/users',
+      roles: ['admin'] // Admin only
     }
   ];
 
-  // Add admin-only navigation items
-  if (isAdmin) {
-    navigation.push(
-      {
-        name: 'Staff',
-        href: '/admin/staff',
-        icon: Users,
-        current: location.pathname === '/admin/staff'
-      },
-      {
-        name: 'Users',
-        href: '/admin/users',
-        icon: UserCheck,
-        current: location.pathname === '/admin/users'
-      }
-    );
-  }
+  // Filter navigation based on user role
+  const navigation = baseNavigation.filter(item => {
+    const userRole = profile?.role;
+    return item.roles.includes(userRole as string);
+  });
 
   const handleSignOut = async () => {
     try {
@@ -255,7 +280,7 @@ const AdminLayout = () => {
               >
                 <item.icon className={`w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 ${item.current ? 'text-white' : 'text-slate-400 group-hover:text-rhino-red'}`} />
                 <span className="truncate">{item.name}</span>
-                {item.name === 'Users' && isAdmin && (
+                {item.roles.includes('admin') && item.roles.length === 1 && (
                   <Badge variant="secondary" className="ml-auto text-xs bg-blue-100 text-blue-800 hidden sm:inline-flex">
                     Admin
                   </Badge>

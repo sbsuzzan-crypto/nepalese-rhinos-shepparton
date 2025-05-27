@@ -31,6 +31,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const initializeAuth = async () => {
       try {
+        console.log('Initializing auth...');
         // Get initial session
         const { data: { session }, error } = await supabase.auth.getSession();
         
@@ -43,6 +44,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           return;
         }
 
+        console.log('Initial session:', session?.user?.email || 'No session');
+
         if (mounted) {
           setUser(session?.user ?? null);
           
@@ -50,6 +53,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             // Fetch profile immediately if user exists
             await fetchProfile(session.user.id);
           } else {
+            setProfile(null);
             setLoading(false);
           }
           setInitialized(true);
@@ -57,6 +61,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } catch (error) {
         console.error('Error initializing auth:', error);
         if (mounted) {
+          setProfile(null);
           setLoading(false);
           setInitialized(true);
         }
@@ -70,15 +75,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, session?.user?.email);
+      console.log('Auth state changed:', event, session?.user?.email || 'No session');
       
       if (!mounted) return;
 
       setUser(session?.user ?? null);
       
       if (session?.user && initialized) {
+        console.log('Fetching profile for user:', session.user.email);
         await fetchProfile(session.user.id);
       } else {
+        console.log('No user or not initialized, clearing profile');
         setProfile(null);
         setLoading(false);
       }
@@ -88,23 +95,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [initialized]);
 
   const fetchProfile = async (userId: string) => {
     try {
+      console.log('Fetching profile for user ID:', userId);
+      
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
 
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching profile:', error);
+      if (error) {
+        if (error.code === 'PGRST116') {
+          console.log('No profile found for user, this might be expected for new users');
+        } else {
+          console.error('Error fetching profile:', error);
+        }
+        setProfile(null);
       } else {
+        console.log('Profile fetched successfully:', {
+          email: data?.email,
+          role: data?.role,
+          is_approved: data?.is_approved
+        });
         setProfile(data);
       }
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      console.error('Error in fetchProfile:', error);
+      setProfile(null);
     } finally {
       setLoading(false);
     }
@@ -155,6 +175,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const isAdmin = profile?.role === 'admin';
   const isModerator = profile?.role === 'moderator' || isAdmin;
   const isApproved = profile?.is_approved === true;
+
+  console.log('Auth context state:', {
+    hasUser: !!user,
+    hasProfile: !!profile,
+    userEmail: user?.email,
+    profileRole: profile?.role,
+    profileApproved: profile?.is_approved,
+    isApproved,
+    loading
+  });
 
   return (
     <AuthContext.Provider

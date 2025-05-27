@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -32,7 +33,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Users, UserCheck, UserX, Shield, Trash2, Crown } from 'lucide-react';
+import { Users, UserCheck, UserX, Shield, Trash2, Crown, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import type { Database } from '@/integrations/supabase/types';
@@ -44,28 +45,54 @@ const UserManagement = () => {
   const [selectedTab, setSelectedTab] = useState('pending');
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { isAdmin } = useAuth();
+
+  // Check if user has admin access
+  if (!isAdmin) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <AlertTriangle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
+          <p className="text-gray-600">
+            You need administrator privileges to access user management.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const { data: profiles, isLoading } = useQuery({
     queryKey: ['profiles'],
     queryFn: async () => {
+      console.log('Fetching profiles for user management...');
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching profiles:', error);
+        throw error;
+      }
+      
+      console.log('Profiles fetched:', data?.length);
       return data as Profile[];
     },
   });
 
   const approveUserMutation = useMutation({
     mutationFn: async (userId: string) => {
+      console.log('Approving user:', userId);
       const { error } = await supabase
         .from('profiles')
         .update({ is_approved: true })
         .eq('id', userId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error approving user:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profiles'] });
@@ -74,16 +101,28 @@ const UserManagement = () => {
         description: 'User approved successfully',
       });
     },
+    onError: (error) => {
+      console.error('Approve user mutation error:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to approve user',
+        variant: 'destructive',
+      });
+    },
   });
 
   const updateRoleMutation = useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: UserRole }) => {
+      console.log('Updating user role:', userId, role);
       const { error } = await supabase
         .from('profiles')
         .update({ role })
         .eq('id', userId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating user role:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profiles'] });
@@ -92,22 +131,42 @@ const UserManagement = () => {
         description: 'User role updated successfully',
       });
     },
+    onError: (error) => {
+      console.error('Update role mutation error:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update user role',
+        variant: 'destructive',
+      });
+    },
   });
 
   const deleteUserMutation = useMutation({
     mutationFn: async (userId: string) => {
+      console.log('Deleting user:', userId);
       const { error } = await supabase
         .from('profiles')
         .delete()
         .eq('id', userId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error deleting user:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profiles'] });
       toast({
         title: 'Success',
         description: 'User deleted successfully',
+      });
+    },
+    onError: (error) => {
+      console.error('Delete user mutation error:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete user',
+        variant: 'destructive',
       });
     },
   });

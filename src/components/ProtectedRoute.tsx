@@ -14,7 +14,21 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
   const { user, profile, loading, isAdmin, isApproved } = useAuth();
   const location = useLocation();
 
+  console.log('ProtectedRoute check:', {
+    hasUser: !!user,
+    hasProfile: !!profile,
+    userEmail: user?.email,
+    profileRole: profile?.role,
+    profileApproved: profile?.is_approved,
+    isApproved,
+    requireAdmin,
+    isAdmin,
+    loading,
+    pathname: location.pathname
+  });
+
   if (loading) {
+    console.log('ProtectedRoute: Still loading...');
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
         <div className="text-center">
@@ -29,10 +43,27 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
   }
 
   if (!user) {
+    console.log('ProtectedRoute: No user, redirecting to auth');
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
+  // Check if profile exists and user is approved
+  if (!profile) {
+    console.log('ProtectedRoute: No profile found for user');
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 to-slate-100">
+        <Alert className="max-w-md shadow-xl border-yellow-200 bg-yellow-50">
+          <AlertTriangle className="h-5 w-5 text-yellow-600" />
+          <AlertDescription className="text-yellow-800 font-medium">
+            Your account profile is being set up. Please try refreshing the page or contact an administrator if this persists.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
   if (!isApproved) {
+    console.log('ProtectedRoute: User not approved');
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 to-slate-100">
         <Alert className="max-w-md shadow-xl border-yellow-200 bg-yellow-50">
@@ -46,6 +77,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
   }
 
   if (requireAdmin && !isAdmin) {
+    console.log('ProtectedRoute: Admin required but user is not admin');
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 to-slate-100">
         <Alert className="max-w-md shadow-xl border-red-200 bg-red-50">
@@ -58,6 +90,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
     );
   }
 
+  console.log('ProtectedRoute: Access granted');
   return <>{children}</>;
 };
 
