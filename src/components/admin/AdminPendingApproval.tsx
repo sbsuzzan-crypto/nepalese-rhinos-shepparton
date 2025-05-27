@@ -22,7 +22,7 @@ const AdminPendingApproval = ({ user, profile, signOut }: AdminPendingApprovalPr
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-6 sm:p-8 text-center border border-slate-200">
         <div className="mb-6">
-          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-4 sm:mb-6 shadow-lg">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-rhino-blue to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 sm:mb-6 shadow-lg">
             <Settings className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
           </div>
           <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-3">Account Pending Approval</h2>
@@ -43,7 +43,7 @@ const AdminPendingApproval = ({ user, profile, signOut }: AdminPendingApprovalPr
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-slate-600">Status:</span>
-                <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 text-xs">
+                <Badge variant="pending" className="text-xs">
                   Pending Approval
                 </Badge>
               </div>

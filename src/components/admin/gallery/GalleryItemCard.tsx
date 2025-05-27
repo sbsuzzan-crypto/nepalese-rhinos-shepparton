@@ -30,7 +30,7 @@ const getCategoryColor = (category: GalleryCategory | null) => {
     case 'training': return 'bg-blue-500';
     case 'events': return 'bg-green-500';
     case 'team_photos': return 'bg-purple-500';
-    case 'community': return 'bg-yellow-500';
+    case 'community': return 'bg-purple-500';
     default: return 'bg-gray-500';
   }
 };
@@ -62,7 +62,7 @@ const GalleryItemCard = ({ item, onEdit, onDelete }: GalleryItemCardProps) => {
         </div>
         {item.is_featured && (
           <div className="absolute top-2 right-2">
-            <Badge className="bg-yellow-500 text-white">Featured</Badge>
+            <Badge variant="featured">Featured</Badge>
           </div>
         )}
       </div>

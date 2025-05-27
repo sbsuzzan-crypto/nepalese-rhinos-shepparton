@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -52,7 +53,7 @@ const Gallery = () => {
       case 'training': return 'bg-blue-500';
       case 'events': return 'bg-green-500';
       case 'team_photos': return 'bg-purple-500';
-      case 'community': return 'bg-yellow-500';
+      case 'community': return 'bg-purple-500';
       default: return 'bg-gray-500';
     }
   };
@@ -127,7 +128,7 @@ const Gallery = () => {
                     </div>
                     {item.is_featured && (
                       <div className="absolute top-4 right-4">
-                        <Badge className="bg-yellow-500 text-white">Featured</Badge>
+                        <Badge variant="featured">Featured</Badge>
                       </div>
                     )}
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">

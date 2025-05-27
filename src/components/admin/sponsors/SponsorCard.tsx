@@ -15,7 +15,7 @@ interface SponsorCardProps {
 
 const getTierIcon = (tier: string | null) => {
   switch (tier?.toLowerCase()) {
-    case 'gold': return <Trophy className="text-yellow-500" size={16} />;
+    case 'gold': return <Trophy className="text-amber-500" size={16} />;
     case 'silver': return <Award className="text-gray-400" size={16} />;
     case 'bronze': return <Star className="text-orange-600" size={16} />;
     default: return <Star className="text-gray-500" size={16} />;
@@ -24,7 +24,7 @@ const getTierIcon = (tier: string | null) => {
 
 const getTierColor = (tier: string | null) => {
   switch (tier?.toLowerCase()) {
-    case 'gold': return 'bg-yellow-500';
+    case 'gold': return 'bg-amber-500';
     case 'silver': return 'bg-gray-400';
     case 'bronze': return 'bg-orange-600';
     default: return 'bg-gray-500';

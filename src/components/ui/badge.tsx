@@ -21,9 +21,15 @@ const badgeVariants = cva(
         warning:
           "border-transparent bg-orange-600 text-white hover:bg-orange-700",
         info:
-          "border-transparent bg-blue-600 text-white hover:bg-blue-700",
+          "border-transparent bg-rhino-blue text-white hover:bg-rhino-blue/80",
         pending:
           "border-transparent bg-slate-500 text-white hover:bg-slate-600",
+        featured:
+          "border-transparent bg-gradient-to-r from-rhino-blue to-blue-600 text-white hover:from-blue-600 hover:to-blue-700",
+        gold:
+          "border-transparent bg-amber-500 text-white hover:bg-amber-600",
+        community:
+          "border-transparent bg-purple-500 text-white hover:bg-purple-600",
       },
     },
     defaultVariants: {
