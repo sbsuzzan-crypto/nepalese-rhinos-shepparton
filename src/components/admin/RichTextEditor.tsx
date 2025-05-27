@@ -2,11 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-
-// Lazy load ReactQuill to avoid SSR issues
-import { lazy, Suspense } from 'react';
-
-const ReactQuill = lazy(() => import('react-quill'));
+import ReactQuill from 'react-quill';
 
 interface RichTextEditorProps {
   label?: string;
@@ -71,17 +67,15 @@ const RichTextEditor = ({
         </Label>
       )}
       <div className="prose-editor">
-        <Suspense fallback={<div className="h-32 bg-gray-100 rounded-md animate-pulse" />}>
-          <ReactQuill
-            theme="snow"
-            value={value}
-            onChange={onChange}
-            modules={modules}
-            formats={formats}
-            placeholder={placeholder}
-            style={{ minHeight: '200px' }}
-          />
-        </Suspense>
+        <ReactQuill
+          theme="snow"
+          value={value}
+          onChange={onChange}
+          modules={modules}
+          formats={formats}
+          placeholder={placeholder}
+          style={{ minHeight: '200px' }}
+        />
       </div>
       {error && (
         <Alert variant="destructive">
