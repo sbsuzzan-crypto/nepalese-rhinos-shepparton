@@ -17,6 +17,8 @@ import JoinUs from "./pages/JoinUs";
 import Contact from "./pages/Contact";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/admin/Dashboard";
+import NewsManagement from "./pages/admin/NewsManagement";
+import PlayersManagement from "./pages/admin/PlayersManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -53,7 +55,8 @@ const App = () => (
               }
             >
               <Route index element={<Dashboard />} />
-              {/* Admin routes will be added here */}
+              <Route path="news" element={<NewsManagement />} />
+              <Route path="players" element={<PlayersManagement />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

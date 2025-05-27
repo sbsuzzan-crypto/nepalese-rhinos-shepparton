@@ -18,7 +18,7 @@ import { Link } from 'react-router-dom';
 const Dashboard = () => {
   const { profile, isAdmin } = useAuth();
   const [stats, setStats] = useState({
-    announcements: 0,
+    news: 0,
     players: 0,
     fixtures: 0,
     gallery: 0,
@@ -30,14 +30,14 @@ const Dashboard = () => {
     const fetchStats = async () => {
       try {
         const [
-          { count: announcementsCount },
+          { count: newsCount },
           { count: playersCount },
           { count: fixturesCount },
           { count: galleryCount },
           { count: messagesCount },
           { count: sponsorsCount }
         ] = await Promise.all([
-          supabase.from('announcements').select('*', { count: 'exact', head: true }),
+          supabase.from('news').select('*', { count: 'exact', head: true }),
           supabase.from('players').select('*', { count: 'exact', head: true }),
           supabase.from('fixtures').select('*', { count: 'exact', head: true }),
           supabase.from('gallery').select('*', { count: 'exact', head: true }),
@@ -46,7 +46,7 @@ const Dashboard = () => {
         ]);
 
         setStats({
-          announcements: announcementsCount || 0,
+          news: newsCount || 0,
           players: playersCount || 0,
           fixtures: fixturesCount || 0,
           gallery: galleryCount || 0,
@@ -64,29 +64,29 @@ const Dashboard = () => {
   const quickActions = [
     {
       title: 'Add News',
-      description: 'Create a new announcement',
-      href: '/admin/announcements/new',
+      description: 'Create a new news article',
+      href: '/admin/news',
       icon: FileText,
       color: 'bg-blue-500'
     },
     {
       title: 'Add Player',
       description: 'Register a new player',
-      href: '/admin/players/new',
+      href: '/admin/players',
       icon: Users,
       color: 'bg-green-500'
     },
     {
       title: 'Add Fixture',
       description: 'Schedule a new match',
-      href: '/admin/fixtures/new',
+      href: '/admin/fixtures',
       icon: Calendar,
       color: 'bg-purple-500'
     },
     {
       title: 'Upload Photos',
       description: 'Add images to gallery',
-      href: '/admin/gallery/new',
+      href: '/admin/gallery',
       icon: Image,
       color: 'bg-orange-500'
     }
@@ -94,10 +94,10 @@ const Dashboard = () => {
 
   const statsCards = [
     {
-      title: 'News & Updates',
-      value: stats.announcements,
+      title: 'News Articles',
+      value: stats.news,
       icon: FileText,
-      href: '/admin/announcements',
+      href: '/admin/news',
       color: 'text-blue-600'
     },
     {
