@@ -15,8 +15,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Settings, Plus, Edit, Save, X } from 'lucide-react';
+import { Settings, Plus, Edit, Save, X, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import DeleteConfirmationDialog from '@/components/admin/DeleteConfirmationDialog';
 import type { Tables } from '@/integrations/supabase/types';
 
 type SiteSetting = Tables<'site_settings'>;
@@ -24,6 +25,8 @@ type SiteSetting = Tables<'site_settings'>;
 const SiteSettingsManagement = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingSetting, setEditingSetting] = useState<SiteSetting | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [settingToDelete, setSettingToDelete] = useState<SiteSetting | null>(null);
   const [formData, setFormData] = useState({
     key: '',
     value: '',
@@ -82,6 +85,26 @@ const SiteSettingsManagement = () => {
     },
   });
 
+  const deleteSettingMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('site_settings')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['site_settings'] });
+      toast({
+        title: 'Success',
+        description: 'Setting deleted successfully',
+      });
+      setDeleteDialogOpen(false);
+      setSettingToDelete(null);
+    },
+  });
+
   const resetForm = () => {
     setFormData({ key: '', value: '', description: '' });
     setEditingSetting(null);
@@ -109,6 +132,17 @@ const SiteSettingsManagement = () => {
       description: setting.description || '',
     });
     setIsDialogOpen(true);
+  };
+
+  const handleDelete = (setting: SiteSetting) => {
+    setSettingToDelete(setting);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (settingToDelete) {
+      deleteSettingMutation.mutate(settingToDelete.id);
+    }
   };
 
   const commonSettings = [
@@ -268,13 +302,23 @@ const SiteSettingsManagement = () => {
                         {setting.value || 'No value set'}
                       </div>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEdit(setting)}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEdit(setting)}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDelete(setting)}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -288,6 +332,18 @@ const SiteSettingsManagement = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmationDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={confirmDelete}
+        itemName={settingToDelete?.key || ''}
+        itemType="Setting"
+        isLoading={deleteSettingMutation.isPending}
+        customMessage={`Are you sure you want to delete the "${settingToDelete?.key}" setting? This will remove the configuration value permanently.`}
+        isDestructive={true}
+      />
     </div>
   );
 };

@@ -28,9 +28,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { UserPlus, Eye, Mail, Phone, Calendar, CheckCircle, XCircle } from 'lucide-react';
+import { UserPlus, Eye, Mail, Phone, Calendar, CheckCircle, XCircle, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import DeleteConfirmationDialog from '@/components/admin/DeleteConfirmationDialog';
 import type { Tables } from '@/integrations/supabase/types';
 
 type JoinSubmission = Tables<'join_submissions'>;
@@ -38,6 +39,8 @@ type JoinSubmission = Tables<'join_submissions'>;
 const JoinSubmissionsManagement = () => {
   const [selectedSubmission, setSelectedSubmission] = useState<JoinSubmission | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [submissionToDelete, setSubmissionToDelete] = useState<JoinSubmission | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -72,6 +75,26 @@ const JoinSubmissionsManagement = () => {
     },
   });
 
+  const deleteSubmissionMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('join_submissions')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['join_submissions'] });
+      toast({
+        title: 'Success',
+        description: 'Application deleted successfully',
+      });
+      setDeleteDialogOpen(false);
+      setSubmissionToDelete(null);
+    },
+  });
+
   const handleStatusChange = (id: string, status: string) => {
     updateStatusMutation.mutate({ id, status });
   };
@@ -79,6 +102,17 @@ const JoinSubmissionsManagement = () => {
   const handleViewDetails = (submission: JoinSubmission) => {
     setSelectedSubmission(submission);
     setIsDialogOpen(true);
+  };
+
+  const handleDelete = (submission: JoinSubmission) => {
+    setSubmissionToDelete(submission);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (submissionToDelete) {
+      deleteSubmissionMutation.mutate(submissionToDelete.id);
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -226,6 +260,14 @@ const JoinSubmissionsManagement = () => {
                             <SelectItem value="rejected">Rejected</SelectItem>
                           </SelectContent>
                         </Select>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDelete(submission)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -293,6 +335,17 @@ const JoinSubmissionsManagement = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmationDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={confirmDelete}
+        itemName={`application from ${submissionToDelete?.name || 'unknown'}`}
+        itemType="Membership Application"
+        isLoading={deleteSubmissionMutation.isPending}
+        customMessage={`Are you sure you want to delete the membership application from ${submissionToDelete?.name}? This action cannot be undone.`}
+      />
     </div>
   );
 };

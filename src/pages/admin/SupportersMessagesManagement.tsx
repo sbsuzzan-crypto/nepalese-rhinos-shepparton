@@ -20,9 +20,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Heart, Eye, Calendar, CheckCircle, X, MessageSquare } from 'lucide-react';
+import { Heart, Eye, Calendar, CheckCircle, X, MessageSquare, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import DeleteConfirmationDialog from '@/components/admin/DeleteConfirmationDialog';
 import type { Tables } from '@/integrations/supabase/types';
 
 type SupportersMessage = Tables<'supporters_messages'>;
@@ -30,6 +31,8 @@ type SupportersMessage = Tables<'supporters_messages'>;
 const SupportersMessagesManagement = () => {
   const [selectedMessage, setSelectedMessage] = useState<SupportersMessage | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [messageToDelete, setMessageToDelete] = useState<SupportersMessage | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -82,9 +85,40 @@ const SupportersMessagesManagement = () => {
     },
   });
 
+  const deleteMessageMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('supporters_messages')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['supporters_messages'] });
+      toast({
+        title: 'Success',
+        description: 'Message deleted successfully',
+      });
+      setDeleteDialogOpen(false);
+      setMessageToDelete(null);
+    },
+  });
+
   const handleViewDetails = (message: SupportersMessage) => {
     setSelectedMessage(message);
     setIsDialogOpen(true);
+  };
+
+  const handleDelete = (message: SupportersMessage) => {
+    setMessageToDelete(message);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (messageToDelete) {
+      deleteMessageMutation.mutate(messageToDelete.id);
+    }
   };
 
   const pendingMessages = messages?.filter(m => !m.is_approved) || [];
@@ -224,6 +258,14 @@ const SupportersMessagesManagement = () => {
                             Publish
                           </Button>
                         )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDelete(message)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -292,6 +334,17 @@ const SupportersMessagesManagement = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmationDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={confirmDelete}
+        itemName={`message from ${messageToDelete?.name || 'unknown'}`}
+        itemType="Supporter Message"
+        isLoading={deleteMessageMutation.isPending}
+        customMessage={`Are you sure you want to delete the message from ${messageToDelete?.name}? This action cannot be undone.`}
+      />
     </div>
   );
 };

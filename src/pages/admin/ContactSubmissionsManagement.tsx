@@ -23,6 +23,7 @@ import {
 import { Mail, Eye, Calendar, Trash2, CheckCircle, MessageSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import DeleteConfirmationDialog from '@/components/admin/DeleteConfirmationDialog';
 import type { Tables } from '@/integrations/supabase/types';
 
 type ContactSubmission = Tables<'contact_submissions'>;
@@ -30,6 +31,8 @@ type ContactSubmission = Tables<'contact_submissions'>;
 const ContactSubmissionsManagement = () => {
   const [selectedSubmission, setSelectedSubmission] = useState<ContactSubmission | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [submissionToDelete, setSubmissionToDelete] = useState<ContactSubmission | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -79,6 +82,8 @@ const ContactSubmissionsManagement = () => {
         title: 'Success',
         description: 'Message deleted successfully',
       });
+      setDeleteDialogOpen(false);
+      setSubmissionToDelete(null);
     },
   });
 
@@ -91,9 +96,14 @@ const ContactSubmissionsManagement = () => {
     }
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this message?')) {
-      deleteSubmissionMutation.mutate(id);
+  const handleDelete = (submission: ContactSubmission) => {
+    setSubmissionToDelete(submission);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (submissionToDelete) {
+      deleteSubmissionMutation.mutate(submissionToDelete.id);
     }
   };
 
@@ -203,7 +213,7 @@ const ContactSubmissionsManagement = () => {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleDelete(submission.id)}
+                            onClick={() => handleDelete(submission)}
                             className="text-red-600 hover:text-red-700"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -266,6 +276,17 @@ const ContactSubmissionsManagement = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmationDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={confirmDelete}
+        itemName={`message from ${submissionToDelete?.name || 'unknown'}`}
+        itemType="Contact Message"
+        isLoading={deleteSubmissionMutation.isPending}
+        customMessage={`Are you sure you want to delete the message from ${submissionToDelete?.name}? This action cannot be undone.`}
+      />
     </div>
   );
 };

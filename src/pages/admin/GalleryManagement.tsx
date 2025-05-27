@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,6 +10,7 @@ import GalleryForm from '@/components/admin/gallery/GalleryForm';
 import GalleryItemCard from '@/components/admin/gallery/GalleryItemCard';
 import GalleryEmptyState from '@/components/admin/gallery/GalleryEmptyState';
 import GalleryFilters from '@/components/admin/gallery/GalleryFilters';
+import DeleteConfirmationDialog from '@/components/admin/DeleteConfirmationDialog';
 import type { Database } from '@/integrations/supabase/types';
 
 type GalleryCategory = Database['public']['Enums']['gallery_category'];
@@ -32,6 +34,9 @@ const GalleryManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<GalleryCategory | 'all'>('all');
   const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<GalleryItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -140,14 +145,20 @@ const GalleryManagement = () => {
     setShowForm(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this gallery item?')) return;
+  const handleDelete = (item: GalleryItem) => {
+    setItemToDelete(item);
+    setDeleteDialogOpen(true);
+  };
 
+  const confirmDelete = async () => {
+    if (!itemToDelete) return;
+
+    setIsDeleting(true);
     try {
       const { error } = await supabase
         .from('gallery')
         .delete()
-        .eq('id', id);
+        .eq('id', itemToDelete.id);
 
       if (error) throw error;
 
@@ -163,6 +174,10 @@ const GalleryManagement = () => {
         description: "Failed to delete gallery item",
         variant: "destructive",
       });
+    } finally {
+      setIsDeleting(false);
+      setDeleteDialogOpen(false);
+      setItemToDelete(null);
     }
   };
 
@@ -255,6 +270,17 @@ const GalleryManagement = () => {
           </div>
         </>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmationDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={confirmDelete}
+        itemName={itemToDelete?.title || ''}
+        itemType="Gallery Item"
+        isLoading={isDeleting}
+        customMessage={`Are you sure you want to delete "${itemToDelete?.title}"? This will permanently remove the image from the gallery.`}
+      />
     </div>
   );
 };

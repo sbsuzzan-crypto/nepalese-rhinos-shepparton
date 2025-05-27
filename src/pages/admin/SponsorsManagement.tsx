@@ -9,6 +9,7 @@ import { Plus, Edit, Trash2, ExternalLink } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import SponsorForm from '@/components/admin/sponsors/SponsorForm';
 import SponsorCard from '@/components/admin/sponsors/SponsorCard';
+import DeleteConfirmationDialog from '@/components/admin/DeleteConfirmationDialog';
 import type { Database } from '@/integrations/supabase/types';
 
 type Sponsor = Database['public']['Tables']['sponsors']['Row'];
@@ -16,6 +17,8 @@ type Sponsor = Database['public']['Tables']['sponsors']['Row'];
 const SponsorsManagement = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingSponsor, setEditingSponsor] = useState<Sponsor | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [sponsorToDelete, setSponsorToDelete] = useState<Sponsor | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -47,6 +50,8 @@ const SponsorsManagement = () => {
         title: 'Success',
         description: 'Sponsor deleted successfully',
       });
+      setDeleteDialogOpen(false);
+      setSponsorToDelete(null);
     },
     onError: (error) => {
       toast({
@@ -62,9 +67,14 @@ const SponsorsManagement = () => {
     setIsFormOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('Are you sure you want to delete this sponsor?')) {
-      deleteMutation.mutate(id);
+  const handleDelete = (sponsor: Sponsor) => {
+    setSponsorToDelete(sponsor);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (sponsorToDelete) {
+      deleteMutation.mutate(sponsorToDelete.id);
     }
   };
 
@@ -168,6 +178,17 @@ const SponsorsManagement = () => {
           onSuccess={handleFormSuccess}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmationDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={confirmDelete}
+        itemName={sponsorToDelete?.name || ''}
+        itemType="Sponsor"
+        isLoading={deleteMutation.isPending}
+        customMessage={`Are you sure you want to delete "${sponsorToDelete?.name}"? This will remove the sponsor from all displays and cannot be undone.`}
+      />
     </div>
   );
 };
