@@ -15,13 +15,16 @@ import { Trash2, Edit, Plus, Image } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import FileUpload from '@/components/admin/FileUpload';
 import { format } from 'date-fns';
+import type { Database } from '@/integrations/supabase/types';
+
+type GalleryCategory = Database['public']['Enums']['gallery_category'];
 
 interface GalleryItem {
   id: string;
   title: string;
   description: string | null;
   image_url: string;
-  category: string | null;
+  category: GalleryCategory | null;
   is_featured: boolean | null;
   created_at: string;
 }
@@ -32,7 +35,13 @@ const GalleryManagement = () => {
   const [loading, setLoading] = useState(true);
   const [editingItem, setEditingItem] = useState<GalleryItem | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    title: string;
+    description: string;
+    image_url: string;
+    category: GalleryCategory;
+    is_featured: boolean;
+  }>({
     title: '',
     description: '',
     image_url: '',
@@ -95,7 +104,7 @@ const GalleryManagement = () => {
       } else {
         const { error } = await supabase
           .from('gallery')
-          .insert([itemData]);
+          .insert(itemData);
 
         if (error) throw error;
 
@@ -167,14 +176,25 @@ const GalleryManagement = () => {
     setShowForm(false);
   };
 
-  const getCategoryColor = (category: string | null) => {
-    switch (category?.toLowerCase()) {
+  const getCategoryColor = (category: GalleryCategory | null) => {
+    switch (category) {
       case 'match_days': return 'bg-red-500';
       case 'training': return 'bg-blue-500';
       case 'events': return 'bg-green-500';
       case 'team_photos': return 'bg-purple-500';
       case 'community': return 'bg-yellow-500';
       default: return 'bg-gray-500';
+    }
+  };
+
+  const getCategoryLabel = (category: GalleryCategory | null) => {
+    switch (category) {
+      case 'match_days': return 'Match Days';
+      case 'training': return 'Training';
+      case 'events': return 'Events';
+      case 'team_photos': return 'Team Photos';
+      case 'community': return 'Community';
+      default: return 'Unknown';
     }
   };
 
@@ -235,7 +255,7 @@ const GalleryManagement = () => {
                   <Label htmlFor="category">Category</Label>
                   <Select
                     value={formData.category}
-                    onValueChange={(value) => setFormData({ ...formData, category: value })}
+                    onValueChange={(value: GalleryCategory) => setFormData({ ...formData, category: value })}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -303,7 +323,7 @@ const GalleryManagement = () => {
               />
               <div className="absolute top-2 left-2">
                 <Badge className={`${getCategoryColor(item.category)} text-white`}>
-                  {item.category?.replace('_', ' ')}
+                  {getCategoryLabel(item.category)}
                 </Badge>
               </div>
               {item.is_featured && (
