@@ -10,7 +10,7 @@ type Sponsor = Database['public']['Tables']['sponsors']['Row'];
 interface SponsorCardProps {
   sponsor: Sponsor;
   onEdit: (sponsor: Sponsor) => void;
-  onDelete: (id: string) => void;
+  onDelete: (sponsor: Sponsor) => void;
 }
 
 const getTierIcon = (tier: string | null) => {
@@ -76,7 +76,7 @@ const SponsorCard = ({ sponsor, onEdit, onDelete }: SponsorCardProps) => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onDelete(sponsor.id)}
+              onClick={() => onDelete(sponsor)}
               className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
             >
               <Trash2 className="h-3 w-3" />

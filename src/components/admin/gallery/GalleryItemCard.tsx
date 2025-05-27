@@ -21,7 +21,7 @@ interface GalleryItem {
 interface GalleryItemCardProps {
   item: GalleryItem;
   onEdit: (item: GalleryItem) => void;
-  onDelete: (id: string) => void;
+  onDelete: (item: GalleryItem) => void;
 }
 
 const getCategoryColor = (category: GalleryCategory | null) => {
@@ -86,7 +86,7 @@ const GalleryItemCard = ({ item, onEdit, onDelete }: GalleryItemCardProps) => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onDelete(item.id)}
+              onClick={() => onDelete(item)}
               className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
             >
               <Trash2 className="h-3 w-3" />
