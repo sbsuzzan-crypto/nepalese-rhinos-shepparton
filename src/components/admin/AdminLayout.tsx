@@ -18,8 +18,8 @@ import {
   Settings,
   UserCheck,
   Shield,
-  Bell,
-  Activity
+  Megaphone,
+  CalendarDays
 } from 'lucide-react';
 
 const AdminLayout = () => {
@@ -108,6 +108,18 @@ const AdminLayout = () => {
       current: location.pathname === '/admin/news'
     },
     {
+      name: 'Announcements',
+      href: '/admin/announcements',
+      icon: Megaphone,
+      current: location.pathname === '/admin/announcements'
+    },
+    {
+      name: 'Events',
+      href: '/admin/events',
+      icon: CalendarDays,
+      current: location.pathname === '/admin/events'
+    },
+    {
       name: 'Players',
       href: '/admin/players',
       icon: Users,
@@ -179,7 +191,7 @@ const AdminLayout = () => {
         </div>
       </div>
 
-      <nav className="flex-1 p-4 bg-white">
+      <nav className="flex-1 p-4 bg-white overflow-y-auto">
         <ul className="space-y-1">
           {navigation.map((item) => (
             <li key={item.name}>
