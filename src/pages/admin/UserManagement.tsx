@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -128,7 +127,7 @@ const UserManagement = () => {
       queryClient.invalidateQueries({ queryKey: ['profiles'] });
       toast({
         title: 'Success',
-        description: 'User role updated successfully',
+6 description: 'User role updated successfully',
       });
     },
     onError: (error) => {
@@ -239,7 +238,7 @@ const UserManagement = () => {
               </div>
             </TableCell>
             <TableCell>
-              <Badge variant={user.is_approved ? 'default' : 'destructive'}>
+              <Badge variant={user.is_approved ? 'default' : 'warning'}>
                 {user.is_approved ? (
                   <>
                     <UserCheck className="w-3 h-3 mr-1" />
