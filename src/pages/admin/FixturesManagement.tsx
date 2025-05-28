@@ -185,7 +185,7 @@ const FixturesManagement = () => {
       case 'live': return 'bg-green-500';
       case 'completed': return 'bg-gray-500';
       case 'cancelled': return 'bg-red-500';
-      case 'postponed': return 'bg-yellow-500';
+      case 'postponed': return 'bg-orange-500';
       default: return 'bg-gray-500';
     }
   };

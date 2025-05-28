@@ -52,9 +52,9 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
     console.log('ProtectedRoute: No profile found for user');
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 to-slate-100">
-        <Alert className="max-w-md shadow-xl border-yellow-200 bg-yellow-50">
-          <AlertTriangle className="h-5 w-5 text-yellow-600" />
-          <AlertDescription className="text-yellow-800 font-medium">
+        <Alert variant="warning" className="max-w-md shadow-xl border-orange-200 bg-orange-50">
+          <AlertTriangle className="h-5 w-5 text-orange-600" />
+          <AlertDescription className="text-orange-800 font-medium">
             Your account profile is being set up. Please try refreshing the page or contact an administrator if this persists.
           </AlertDescription>
         </Alert>
@@ -66,9 +66,9 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
     console.log('ProtectedRoute: User not approved');
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 to-slate-100">
-        <Alert className="max-w-md shadow-xl border-yellow-200 bg-yellow-50">
-          <AlertTriangle className="h-5 w-5 text-yellow-600" />
-          <AlertDescription className="text-yellow-800 font-medium">
+        <Alert variant="warning" className="max-w-md shadow-xl border-orange-200 bg-orange-50">
+          <AlertTriangle className="h-5 w-5 text-orange-600" />
+          <AlertDescription className="text-orange-800 font-medium">
             Your account is pending approval. Please contact an administrator to gain access to the admin panel.
           </AlertDescription>
         </Alert>
@@ -80,7 +80,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
     console.log('ProtectedRoute: Admin required but user is not admin');
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 to-slate-100">
-        <Alert className="max-w-md shadow-xl border-red-200 bg-red-50">
+        <Alert variant="destructive" className="max-w-md shadow-xl border-red-200 bg-red-50">
           <Shield className="h-5 w-5 text-red-600" />
           <AlertDescription className="text-red-800 font-medium">
             You don't have permission to access this page. Admin access required.
