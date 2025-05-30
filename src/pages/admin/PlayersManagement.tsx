@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,6 +14,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Trash2, Edit, Plus, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import FileUpload from '@/components/admin/FileUpload';
+import CustomDeleteDialog from '@/components/admin/CustomDeleteDialog';
 
 interface Player {
   id: string;
@@ -31,6 +33,8 @@ const PlayersManagement = () => {
   const [loading, setLoading] = useState(true);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [playerToDelete, setPlayerToDelete] = useState<Player | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     position: 'forward' as 'goalkeeper' | 'defender' | 'midfielder' | 'forward',
@@ -44,17 +48,43 @@ const PlayersManagement = () => {
   useEffect(() => {
     if (isAdmin || isModerator) {
       fetchPlayers();
+      
+      // Set up realtime subscription
+      const channel = supabase
+        .channel('players-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'players'
+          },
+          (payload) => {
+            console.log('Players realtime update:', payload);
+            fetchPlayers();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [isAdmin, isModerator]);
 
   const fetchPlayers = async () => {
     try {
+      console.log('Fetching players...');
       const { data, error } = await supabase
         .from('players')
         .select('*')
         .order('jersey_number', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching players:', error);
+        throw error;
+      }
+      console.log('Players fetched:', data);
       setPlayers(data || []);
     } catch (error: any) {
       console.error('Error fetching players:', error);
@@ -82,6 +112,7 @@ const PlayersManagement = () => {
       };
 
       if (editingPlayer) {
+        console.log('Updating player:', editingPlayer.id);
         const { error } = await supabase
           .from('players')
           .update(playerData)
@@ -94,6 +125,7 @@ const PlayersManagement = () => {
           description: "Player updated successfully",
         });
       } else {
+        console.log('Creating new player');
         const { error } = await supabase
           .from('players')
           .insert([playerData]);
@@ -131,17 +163,27 @@ const PlayersManagement = () => {
     setShowForm(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this player?')) return;
+  const handleDelete = (player: Player) => {
+    setPlayerToDelete(player);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!playerToDelete) return;
 
     try {
+      console.log('Deleting player:', playerToDelete.id);
       const { error } = await supabase
         .from('players')
         .delete()
-        .eq('id', id);
+        .eq('id', playerToDelete.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Delete error:', error);
+        throw error;
+      }
 
+      console.log('Player deleted successfully');
       toast({
         title: "Success",
         description: "Player deleted successfully",
@@ -154,6 +196,9 @@ const PlayersManagement = () => {
         description: "Failed to delete player",
         variant: "destructive",
       });
+    } finally {
+      setDeleteDialogOpen(false);
+      setPlayerToDelete(null);
     }
   };
 
@@ -191,14 +236,19 @@ const PlayersManagement = () => {
   }
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="inline-block w-8 h-8 border-4 border-rhino-red border-t-transparent rounded-full animate-spin"></div>
+        <p className="ml-3 text-gray-600">Loading players...</p>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Players Management</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Players Management</h1>
           <p className="text-gray-600">Manage team players and their information</p>
         </div>
         <Button 
@@ -213,7 +263,7 @@ const PlayersManagement = () => {
       {showForm && (
         <Card>
           <CardHeader>
-            <CardTitle>
+            <CardTitle className="text-gray-900">
               {editingPlayer ? 'Edit Player' : 'Add New Player'}
             </CardTitle>
             <CardDescription>
@@ -224,17 +274,18 @@ const PlayersManagement = () => {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <Label htmlFor="name">Name</Label>
+                  <Label htmlFor="name" className="text-gray-700">Name</Label>
                   <Input
                     id="name"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     required
+                    className="text-gray-900"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="jersey_number">Jersey Number</Label>
+                  <Label htmlFor="jersey_number" className="text-gray-700">Jersey Number</Label>
                   <Input
                     id="jersey_number"
                     type="number"
@@ -242,11 +293,12 @@ const PlayersManagement = () => {
                     max="99"
                     value={formData.jersey_number}
                     onChange={(e) => setFormData({ ...formData, jersey_number: e.target.value })}
+                    className="text-gray-900"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="position">Position</Label>
+                  <Label htmlFor="position" className="text-gray-700">Position</Label>
                   <Select
                     value={formData.position}
                     onValueChange={(value) => setFormData({ ...formData, position: value as 'goalkeeper' | 'defender' | 'midfielder' | 'forward' })}
@@ -269,22 +321,23 @@ const PlayersManagement = () => {
                     checked={formData.is_active}
                     onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
                   />
-                  <Label htmlFor="is_active">Active Player</Label>
+                  <Label htmlFor="is_active" className="text-gray-700">Active Player</Label>
                 </div>
               </div>
 
               <div>
-                <Label htmlFor="bio">Bio</Label>
+                <Label htmlFor="bio" className="text-gray-700">Bio</Label>
                 <Textarea
                   id="bio"
                   value={formData.bio}
                   onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
                   rows={4}
+                  className="text-gray-900"
                 />
               </div>
 
               <div>
-                <Label>Player Photo</Label>
+                <Label className="text-gray-700">Player Photo</Label>
                 <FileUpload
                   onUpload={(url) => setFormData({ ...formData, photo_url: url })}
                   accept="image/*"
@@ -312,7 +365,7 @@ const PlayersManagement = () => {
             <CardHeader>
               <div className="flex justify-between items-start">
                 <div className="flex-1">
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 text-gray-900">
                     {player.name}
                     {player.jersey_number && (
                       <Badge variant="outline">#{player.jersey_number}</Badge>
@@ -338,7 +391,7 @@ const PlayersManagement = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleDelete(player.id)}
+                    onClick={() => handleDelete(player)}
                     className="text-red-600 hover:text-red-700"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -366,7 +419,7 @@ const PlayersManagement = () => {
         <Card>
           <CardContent className="text-center py-12">
             <Users className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No players</h3>
+            <h3 className="text-lg font-semibold mb-2 text-gray-900">No players</h3>
             <p className="text-gray-600 mb-4">Get started by adding your first player</p>
             <Button onClick={() => setShowForm(true)} className="bg-rhino-red hover:bg-red-700">
               <Plus className="h-4 w-4 mr-2" />
@@ -375,6 +428,17 @@ const PlayersManagement = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* Custom Delete Confirmation Dialog */}
+      <CustomDeleteDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={confirmDelete}
+        itemName={playerToDelete?.name || ''}
+        itemType="Player"
+        isLoading={false}
+        description={`Are you sure you want to delete "${playerToDelete?.name}"? This will permanently remove the player from the system.`}
+      />
     </div>
   );
 };

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,7 +9,7 @@ import GalleryForm from '@/components/admin/gallery/GalleryForm';
 import GalleryItemCard from '@/components/admin/gallery/GalleryItemCard';
 import GalleryEmptyState from '@/components/admin/gallery/GalleryEmptyState';
 import GalleryFilters from '@/components/admin/gallery/GalleryFilters';
-import DeleteConfirmationDialog from '@/components/admin/DeleteConfirmationDialog';
+import CustomDeleteDialog from '@/components/admin/CustomDeleteDialog';
 import type { Database } from '@/integrations/supabase/types';
 
 type GalleryCategory = Database['public']['Enums']['gallery_category'];
@@ -42,17 +41,43 @@ const GalleryManagement = () => {
   useEffect(() => {
     if (isAdmin || isModerator) {
       fetchGalleryItems();
+      
+      // Set up realtime subscription for better performance
+      const channel = supabase
+        .channel('gallery-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'gallery'
+          },
+          (payload) => {
+            console.log('Gallery realtime update:', payload);
+            fetchGalleryItems();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [isAdmin, isModerator]);
 
   const fetchGalleryItems = async () => {
     try {
+      console.log('Fetching gallery items...');
       const { data, error } = await supabase
         .from('gallery')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching gallery items:', error);
+        throw error;
+      }
+      console.log('Gallery items fetched:', data);
       setGalleryItems(data || []);
     } catch (error: any) {
       console.error('Error fetching gallery items:', error);
@@ -104,6 +129,7 @@ const GalleryManagement = () => {
       };
 
       if (editingItem) {
+        console.log('Updating gallery item:', editingItem.id);
         const { error } = await supabase
           .from('gallery')
           .update(itemData)
@@ -116,6 +142,7 @@ const GalleryManagement = () => {
           description: "Gallery item updated successfully",
         });
       } else {
+        console.log('Creating new gallery item');
         const { error } = await supabase
           .from('gallery')
           .insert(itemData);
@@ -155,13 +182,18 @@ const GalleryManagement = () => {
 
     setIsDeleting(true);
     try {
+      console.log('Deleting gallery item:', itemToDelete.id);
       const { error } = await supabase
         .from('gallery')
         .delete()
         .eq('id', itemToDelete.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Delete error:', error);
+        throw error;
+      }
 
+      console.log('Gallery item deleted successfully');
       toast({
         title: "Success",
         description: "Gallery item deleted successfully",
@@ -202,14 +234,19 @@ const GalleryManagement = () => {
   }
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="inline-block w-8 h-8 border-4 border-rhino-red border-t-transparent rounded-full animate-spin"></div>
+        <p className="ml-3 text-gray-600">Loading gallery...</p>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Gallery Management</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Gallery Management</h1>
           <p className="text-gray-600">Manage gallery images and content</p>
         </div>
         <Button 
@@ -271,15 +308,15 @@ const GalleryManagement = () => {
         </>
       )}
 
-      {/* Delete Confirmation Dialog */}
-      <DeleteConfirmationDialog
+      {/* Custom Delete Confirmation Dialog */}
+      <CustomDeleteDialog
         isOpen={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
         onConfirm={confirmDelete}
         itemName={itemToDelete?.title || ''}
         itemType="Gallery Item"
         isLoading={isDeleting}
-        customMessage={`Are you sure you want to delete "${itemToDelete?.title}"? This will permanently remove the image from the gallery.`}
+        description={`Are you sure you want to delete "${itemToDelete?.title}"? This will permanently remove the image from the gallery.`}
       />
     </div>
   );
