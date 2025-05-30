@@ -9,6 +9,7 @@ interface DashboardCardProps {
   icon: LucideIcon;
   href?: string;
   color?: string;
+  iconBg?: string;
   description?: string;
   trend?: {
     value: number;
@@ -21,7 +22,8 @@ const DashboardCard = ({
   value, 
   icon: Icon, 
   href, 
-  color = 'text-rhino-blue',
+  color = 'bg-rhino-blue',
+  iconBg = 'bg-blue-100',
   description,
   trend 
 }: DashboardCardProps) => {
@@ -30,15 +32,15 @@ const DashboardCard = ({
   return (
     <CardComponent 
       to={href || '#'} 
-      className={`block ${href ? 'hover:shadow-lg transition-all duration-200 hover:-translate-y-1' : ''}`}
+      className={`block ${href ? 'hover:shadow-lg transition-all duration-200 hover:-translate-y-1 cursor-pointer' : ''}`}
     >
-      <Card className="relative overflow-hidden">
+      <Card className="relative overflow-hidden border-0 shadow-lg bg-white">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium text-gray-600">
             {title}
           </CardTitle>
-          <div className={`p-2 rounded-lg bg-gray-50 ${color.replace('text-', 'text-')}`}>
-            <Icon className="h-4 w-4" />
+          <div className={`p-3 rounded-xl ${iconBg} shadow-md`}>
+            <Icon className={`h-5 w-5 ${color.replace('bg-', 'text-')}`} />
           </div>
         </CardHeader>
         <CardContent>
@@ -55,6 +57,7 @@ const DashboardCard = ({
           {description && (
             <p className="text-xs text-gray-500 mt-1">{description}</p>
           )}
+          <div className={`absolute bottom-0 left-0 w-full h-1 ${color}`}></div>
         </CardContent>
       </Card>
     </CardComponent>

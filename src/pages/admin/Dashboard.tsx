@@ -85,7 +85,7 @@ const Dashboard = () => {
       description: 'Share the latest club news and match reports with supporters',
       href: '/admin/news',
       icon: FileText,
-      color: 'bg-rhino-blue'
+      color: 'bg-blue-600'
     },
     {
       title: 'Add Player',
@@ -116,48 +116,54 @@ const Dashboard = () => {
       value: stats.news,
       icon: FileText,
       href: '/admin/news',
-      color: 'text-rhino-blue',
-      description: 'Published articles'
+      color: 'bg-blue-600',
+      description: 'Published articles',
+      iconBg: 'bg-blue-100'
     },
     {
       title: 'Active Players',
       value: stats.players,
       icon: Users,
       href: '/admin/players',
-      color: 'text-emerald-600',
-      description: 'Squad members'
+      color: 'bg-emerald-600',
+      description: 'Squad members',
+      iconBg: 'bg-emerald-100'
     },
     {
       title: 'Fixtures',
       value: stats.fixtures,
       icon: Calendar,
       href: '/admin/fixtures',
-      color: 'text-purple-600',
-      description: 'Total matches'
+      color: 'bg-purple-600',
+      description: 'Total matches',
+      iconBg: 'bg-purple-100'
     },
     {
       title: 'Gallery Photos',
       value: stats.gallery,
       icon: Image,
       href: '/admin/gallery',
-      color: 'text-orange-600',
-      description: 'Media uploads'
+      color: 'bg-orange-600',
+      description: 'Media uploads',
+      iconBg: 'bg-orange-100'
     },
     {
       title: 'Messages',
       value: stats.messages,
       icon: MessageSquare,
       href: '/admin/messages',
-      color: 'text-red-600',
-      description: 'Contact inquiries'
+      color: 'bg-red-600',
+      description: 'Contact inquiries',
+      iconBg: 'bg-red-100'
     },
     {
       title: 'Sponsors',
       value: stats.sponsors,
       icon: Trophy,
       href: '/admin/sponsors',
-      color: 'text-blue-600',
-      description: 'Active partnerships'
+      color: 'bg-amber-600',
+      description: 'Active partnerships',
+      iconBg: 'bg-amber-100'
     }
   ];
 
@@ -168,16 +174,18 @@ const Dashboard = () => {
         value: stats.staff,
         icon: Users,
         href: '/admin/staff',
-        color: 'text-indigo-600',
-        description: 'Team personnel'
+        color: 'bg-indigo-600',
+        description: 'Team personnel',
+        iconBg: 'bg-indigo-100'
       },
       {
         title: 'Pending Approvals',
         value: stats.pendingUsers,
         icon: UserX,
         href: '/admin/users',
-        color: 'text-orange-600',
-        description: 'Awaiting approval'
+        color: 'bg-rose-600',
+        description: 'Awaiting approval',
+        iconBg: 'bg-rose-100'
       }
     );
   }
@@ -185,8 +193,8 @@ const Dashboard = () => {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="bg-gradient-to-r from-rhino-red to-red-700 rounded-lg p-6 text-white">
-        <h1 className="text-3xl font-bold mb-2">
+      <div className="bg-gradient-to-r from-rhino-red to-red-700 rounded-lg p-6 text-white shadow-xl">
+        <h1 className="text-3xl font-bold mb-2 text-white">
           Welcome back, {profile?.full_name || 'Admin'}!
         </h1>
         <p className="text-red-100">
@@ -194,20 +202,20 @@ const Dashboard = () => {
         </p>
         <div className="flex items-center gap-4 mt-4">
           <div className="flex items-center gap-2">
-            <Activity className="h-4 w-4" />
-            <span className="text-sm">System Status: Online</span>
+            <Activity className="h-4 w-4 text-white" />
+            <span className="text-sm text-white">System Status: Online</span>
           </div>
           <div className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4" />
-            <span className="text-sm">All services operational</span>
+            <TrendingUp className="h-4 w-4 text-white" />
+            <span className="text-sm text-white">All services operational</span>
           </div>
         </div>
       </div>
 
       {/* System Status Alert */}
-      <Alert variant="success">
-        <CheckCircle className="h-4 w-4" />
-        <AlertDescription>
+      <Alert variant="default" className="border-emerald-200 bg-emerald-50">
+        <CheckCircle className="h-4 w-4 text-emerald-600" />
+        <AlertDescription className="text-emerald-800">
           All systems are running smoothly. Your website is online and accessible to visitors.
         </AlertDescription>
       </Alert>
