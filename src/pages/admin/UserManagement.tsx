@@ -127,7 +127,7 @@ const UserManagement = () => {
       queryClient.invalidateQueries({ queryKey: ['profiles'] });
       toast({
         title: 'Success',
-6 description: 'User role updated successfully',
+        description: 'User role updated successfully',
       });
     },
     onError: (error) => {
