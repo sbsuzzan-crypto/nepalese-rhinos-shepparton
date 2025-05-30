@@ -19,7 +19,7 @@ const badgeVariants = cva(
         success:
           "border-transparent bg-emerald-600 text-white hover:bg-emerald-700",
         warning:
-          "border-transparent bg-orange-600 text-white hover:bg-orange-700",
+          "border-transparent bg-slate-600 text-white hover:bg-slate-700",
         info:
           "border-transparent bg-rhino-blue text-white hover:bg-rhino-blue/80",
         pending:

@@ -4,8 +4,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ... keep existing code (all existing CSS) */
-
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -198,4 +196,25 @@ html {
 .prose-editor .ql-snow.ql-toolbar .ql-picker-item.ql-selected,
 .prose-editor .ql-snow .ql-toolbar .ql-picker-item.ql-selected {
   color: hsl(var(--primary));
+}
+
+/* Force all text to be black in admin components */
+.admin-content * {
+  color: black !important;
+}
+
+.admin-tabs * {
+  color: black !important;
+}
+
+.admin-dialog * {
+  color: black !important;
+}
+
+.admin-toast * {
+  color: black !important;
+}
+
+.admin-popover * {
+  color: black !important;
 }
