@@ -198,41 +198,56 @@ html {
   color: hsl(var(--primary));
 }
 
-/* Force all text to be black in admin components */
-.admin-content *,
-.admin-tabs *,
-.admin-dialog *,
-.admin-toast *,
-.admin-popover *,
-[data-radix-popper-content-wrapper] *,
-[data-radix-select-content] *,
-[data-radix-dialog-content] *,
-[data-radix-alert-dialog-content] *,
-[data-radix-popover-content] * {
+/* Force black text only in admin panel components */
+.admin-layout *,
+.admin-layout .admin-content *,
+.admin-layout .admin-tabs *,
+.admin-layout .admin-dialog *,
+.admin-layout .admin-toast *,
+.admin-layout .admin-popover *,
+.admin-layout [data-radix-popper-content-wrapper] *,
+.admin-layout [data-radix-select-content] *,
+.admin-layout [data-radix-dialog-content] *,
+.admin-layout [data-radix-alert-dialog-content] *,
+.admin-layout [data-radix-popover-content] *,
+.admin-layout input,
+.admin-layout textarea,
+.admin-layout select,
+.admin-layout label,
+.admin-layout [role="option"],
+.admin-layout [role="menuitem"],
+.admin-layout [data-radix-select-item],
+.admin-layout [role="dialog"] *,
+.admin-layout [role="alertdialog"] * {
   color: black !important;
 }
 
-/* Ensure form elements are black */
-input, textarea, select, label {
-  color: black !important;
-}
-
-/* Ensure dropdowns and selects have black text */
-[role="option"], [role="menuitem"], [data-radix-select-item] {
-  color: black !important;
-}
-
-/* Ensure all dialog content is black */
-[role="dialog"] *, [role="alertdialog"] * {
-  color: black !important;
-}
-
-/* Override any remaining yellow text */
-* {
-  color: black !important;
-}
-
-/* Exception for specific brand colors that should remain */
-.text-rhino-red, .text-red-600, .text-red-700, .text-green-600, .text-blue-600 {
+/* Exception for specific brand colors that should remain in admin */
+.admin-layout .text-rhino-red,
+.admin-layout .text-red-600,
+.admin-layout .text-red-700,
+.admin-layout .text-green-600,
+.admin-layout .text-blue-600,
+.admin-layout .text-emerald-600,
+.admin-layout .text-amber-600,
+.admin-layout .text-purple-600,
+.admin-layout .text-orange-600,
+.admin-layout .text-indigo-600,
+.admin-layout .text-rose-600,
+.admin-layout .text-white {
   color: inherit !important;
 }
+
+/* Fix white text on red background in admin */
+.admin-layout .bg-gradient-to-r.from-rhino-red *,
+.admin-layout .bg-rhino-red *,
+.admin-layout .text-white {
+  color: white !important;
+}
+
+.admin-layout .bg-gradient-to-r.from-rhino-red.to-red-700 *,
+.admin-layout .bg-red-600 *,
+.admin-layout .bg-red-700 * {
+  color: white !important;
+}
+

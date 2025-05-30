@@ -52,7 +52,7 @@ const AdminSidebar = ({
                 }`}
               >
                 <item.icon className={`w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 ${item.current ? 'text-white' : 'text-slate-400 group-hover:text-rhino-red'}`} />
-                <span className={`truncate ${item.current ? 'text-white' : ''}`}>{item.name}</span>
+                <span className={`truncate ${item.current ? 'text-white' : 'text-slate-700 group-hover:text-rhino-red'}`}>{item.name}</span>
                 {item.roles.includes('admin') && item.roles.length === 1 && (
                   <Badge variant="secondary" className="ml-auto text-xs bg-blue-100 text-blue-800 hidden sm:inline-flex">
                     Admin

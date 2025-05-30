@@ -191,7 +191,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 admin-layout">
       {/* Header */}
       <div className="bg-gradient-to-r from-rhino-red to-red-700 rounded-lg p-6 text-white shadow-xl">
         <h1 className="text-3xl font-bold mb-2 text-white">
@@ -247,7 +247,7 @@ const Dashboard = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card className="border-l-4 border-l-rhino-blue">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-gray-900">
                   <UserCheck className="h-5 w-5 text-rhino-blue" />
                   User Management
                 </CardTitle>
@@ -258,11 +258,11 @@ const Dashboard = () => {
               <CardContent>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span>Approved Users:</span>
+                    <span className="text-gray-700">Approved Users:</span>
                     <span className="font-medium text-emerald-600">{stats.approvedUsers}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Pending Approval:</span>
+                    <span className="text-gray-700">Pending Approval:</span>
                     <span className="font-medium text-orange-600">{stats.pendingUsers}</span>
                   </div>
                 </div>
@@ -271,7 +271,7 @@ const Dashboard = () => {
 
             <Card className="border-l-4 border-l-purple-500">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-gray-900">
                   <Users className="h-5 w-5 text-purple-600" />
                   Staff Management
                 </CardTitle>
@@ -282,11 +282,11 @@ const Dashboard = () => {
               <CardContent>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span>Total Staff:</span>
-                    <span className="font-medium">{stats.staff}</span>
+                    <span className="text-gray-700">Total Staff:</span>
+                    <span className="font-medium text-gray-900">{stats.staff}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>System Access:</span>
+                    <span className="text-gray-700">System Access:</span>
                     <span className="font-medium text-emerald-600">Full Control</span>
                   </div>
                 </div>
