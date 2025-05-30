@@ -199,22 +199,40 @@ html {
 }
 
 /* Force all text to be black in admin components */
-.admin-content * {
+.admin-content *,
+.admin-tabs *,
+.admin-dialog *,
+.admin-toast *,
+.admin-popover *,
+[data-radix-popper-content-wrapper] *,
+[data-radix-select-content] *,
+[data-radix-dialog-content] *,
+[data-radix-alert-dialog-content] *,
+[data-radix-popover-content] * {
   color: black !important;
 }
 
-.admin-tabs * {
+/* Ensure form elements are black */
+input, textarea, select, label {
   color: black !important;
 }
 
-.admin-dialog * {
+/* Ensure dropdowns and selects have black text */
+[role="option"], [role="menuitem"], [data-radix-select-item] {
   color: black !important;
 }
 
-.admin-toast * {
+/* Ensure all dialog content is black */
+[role="dialog"] *, [role="alertdialog"] * {
   color: black !important;
 }
 
-.admin-popover * {
+/* Override any remaining yellow text */
+* {
   color: black !important;
+}
+
+/* Exception for specific brand colors that should remain */
+.text-rhino-red, .text-red-600, .text-red-700, .text-green-600, .text-blue-600 {
+  color: inherit !important;
 }
