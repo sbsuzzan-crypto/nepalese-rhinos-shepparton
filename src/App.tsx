@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { HelmetProvider } from "react-helmet-async";
 import { queryClient } from "@/lib/queryClient";
 import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
@@ -17,6 +18,7 @@ import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import AllGallery from "./pages/AllGallery";
 import GalleryPage from "./pages/GalleryPage";
+import AllNews from "./pages/AllNews";
 import NewsArticle from "./pages/NewsArticle";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminLayout from "./components/admin/AdminLayout";
@@ -41,47 +43,50 @@ import TeamsManagement from "./pages/admin/TeamsManagement";
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/teams" element={<Teams />} />
-            <Route path="/fixtures" element={<Fixtures />} />
-            <Route path="/gallery" element={<Gallery />} />
-            <Route path="/all-gallery" element={<AllGallery />} />
-            <Route path="/gallery-page" element={<GalleryPage />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/join-us" element={<JoinUs />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/news/:id" element={<NewsArticle />} />
-            
-            <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminLayout /></ProtectedRoute>}>
-              <Route index element={<Dashboard />} />
-              <Route path="news" element={<NewsManagement />} />
-              <Route path="players" element={<PlayersManagement />} />
-              <Route path="staff" element={<StaffManagement />} />
-              <Route path="teams" element={<TeamsManagement />} />
-              <Route path="fixtures" element={<FixturesManagement />} />
-              <Route path="gallery" element={<GalleryManagement />} />
-              <Route path="sponsors" element={<SponsorsManagement />} />
-              <Route path="events" element={<EventsManagement />} />
-              <Route path="announcements" element={<AnnouncementsManagement />} />
-              <Route path="contact-submissions" element={<ContactSubmissionsManagement />} />
-              <Route path="join-submissions" element={<JoinSubmissionsManagement />} />
-              <Route path="supporters-messages" element={<SupportersMessagesManagement />} />
-              <Route path="messages" element={<MessagesManagement />} />
-              <Route path="documents" element={<DocumentsManagement />} />
-              <Route path="users" element={<UserManagement />} />
-              <Route path="settings" element={<SiteSettingsManagement />} />
-            </Route>
-            
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+      <HelmetProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/teams" element={<Teams />} />
+              <Route path="/fixtures" element={<Fixtures />} />
+              <Route path="/gallery" element={<Gallery />} />
+              <Route path="/all-gallery" element={<AllGallery />} />
+              <Route path="/gallery-page" element={<GalleryPage />} />
+              <Route path="/all-news" element={<AllNews />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/join-us" element={<JoinUs />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/news/:id" element={<NewsArticle />} />
+              
+              <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminLayout /></ProtectedRoute>}>
+                <Route index element={<Dashboard />} />
+                <Route path="news" element={<NewsManagement />} />
+                <Route path="players" element={<PlayersManagement />} />
+                <Route path="staff" element={<StaffManagement />} />
+                <Route path="teams" element={<TeamsManagement />} />
+                <Route path="fixtures" element={<FixturesManagement />} />
+                <Route path="gallery" element={<GalleryManagement />} />
+                <Route path="sponsors" element={<SponsorsManagement />} />
+                <Route path="events" element={<EventsManagement />} />
+                <Route path="announcements" element={<AnnouncementsManagement />} />
+                <Route path="contact-submissions" element={<ContactSubmissionsManagement />} />
+                <Route path="join-submissions" element={<JoinSubmissionsManagement />} />
+                <Route path="supporters-messages" element={<SupportersMessagesManagement />} />
+                <Route path="messages" element={<MessagesManagement />} />
+                <Route path="documents" element={<DocumentsManagement />} />
+                <Route path="users" element={<UserManagement />} />
+                <Route path="settings" element={<SiteSettingsManagement />} />
+              </Route>
+              
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </HelmetProvider>
     </AuthProvider>
   </QueryClientProvider>
 );
