@@ -1,59 +1,14 @@
 
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import React from "react";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Calendar, User, ChevronRight, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import { format } from "date-fns";
-
-interface NewsArticle {
-  id: string;
-  title: string;
-  content: string;
-  excerpt?: string;
-  featured_image_url?: string;
-  author_id?: string;
-  created_at: string;
-  is_published: boolean;
-  published_at?: string;
-  updated_at: string;
-}
+import { useLatestNews } from "@/hooks/useNews";
+import NewsCard from "@/components/news/NewsCard";
+import NewsLoadingSkeleton from "@/components/news/NewsLoadingSkeleton";
 
 const LatestNews = () => {
-  const { data: articles, isLoading, error } = useQuery({
-    queryKey: ['latest-news'],
-    queryFn: async () => {
-      console.log('Fetching latest news...');
-      const { data, error } = await supabase
-        .from('news')
-        .select('*')
-        .eq('is_published', true)
-        .order('created_at', { ascending: false })
-        .limit(3);
-      
-      if (error) {
-        console.error('Error fetching news:', error);
-        throw error;
-      }
-      
-      console.log('Latest news fetched successfully:', data);
-      return data as NewsArticle[];
-    },
-  });
-
-  const truncateText = (text: string, maxLength: number) => {
-    return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
-  };
-
-  const formatDate = (dateString: string) => {
-    try {
-      return format(new Date(dateString), "MMMM do, yyyy");
-    } catch {
-      return dateString;
-    }
-  };
+  const { data: articles, isLoading, error } = useLatestNews(3);
 
   if (error) {
     return (
@@ -81,62 +36,12 @@ const LatestNews = () => {
           </div>
 
           {isLoading ? (
-            <div className="grid md:grid-cols-3 gap-6">
-              {[...Array(3)].map((_, index) => (
-                <Card key={index} className="overflow-hidden">
-                  <Skeleton className="h-48 w-full" />
-                  <CardContent className="p-6">
-                    <Skeleton className="h-6 w-3/4 mb-2" />
-                    <Skeleton className="h-4 w-full mb-2" />
-                    <Skeleton className="h-4 w-2/3 mb-4" />
-                    <Skeleton className="h-4 w-1/2" />
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            <NewsLoadingSkeleton count={3} />
           ) : articles && articles.length > 0 ? (
             <>
               <div className="grid md:grid-cols-3 gap-6 mb-8">
                 {articles.map((article) => (
-                  <Card key={article.id} className="overflow-hidden hover:shadow-lg transition-shadow group">
-                    {article.featured_image_url && (
-                      <div className="aspect-video overflow-hidden">
-                        <img
-                          src={article.featured_image_url}
-                          alt={article.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      </div>
-                    )}
-                    <CardContent className="p-6">
-                      <div className="flex items-center gap-4 text-sm text-rhino-gray mb-3">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-4 w-4" />
-                          <span>{formatDate(article.created_at)}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <User className="h-4 w-4" />
-                          <span>Admin</span>
-                        </div>
-                      </div>
-                      
-                      <h3 className="text-xl font-bold text-rhino-blue mb-3 line-clamp-2">
-                        {article.title}
-                      </h3>
-                      
-                      <p className="text-rhino-gray mb-4 line-clamp-3">
-                        {article.excerpt || truncateText(article.content.replace(/<[^>]*>/g, ''), 120)}
-                      </p>
-                      
-                      <Link 
-                        to={`/news/${article.id}`}
-                        className="inline-flex items-center gap-2 text-rhino-red hover:text-red-700 font-semibold transition-colors"
-                      >
-                        Read More
-                        <ChevronRight className="h-4 w-4" />
-                      </Link>
-                    </CardContent>
-                  </Card>
+                  <NewsCard key={article.id} article={article} />
                 ))}
               </div>
 

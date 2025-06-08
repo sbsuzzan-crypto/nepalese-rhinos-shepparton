@@ -1,7 +1,5 @@
 
 import { useParams, Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import MobileBottomNav from "@/components/MobileBottomNav";
@@ -12,72 +10,13 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, User, ArrowLeft, Clock, Tag } from "lucide-react";
-import { format } from "date-fns";
+import { useNewsArticle } from "@/hooks/useNews";
+import { formatDateTime, getReadingTime } from "@/utils/formatters";
 import NewsComments from "@/components/NewsComments";
-
-interface NewsArticle {
-  id: string;
-  title: string;
-  content: string;
-  excerpt?: string;
-  featured_image_url?: string;
-  author_id?: string;
-  created_at: string;
-  is_published: boolean;
-  published_at?: string;
-  updated_at: string;
-  category_id?: string;
-}
-
-interface Category {
-  id: string;
-  name: string;
-  color: string;
-}
 
 const NewsArticle = () => {
   const { id } = useParams();
-
-  const { data: article, isLoading, error } = useQuery({
-    queryKey: ['news-article', id],
-    queryFn: async () => {
-      if (!id) throw new Error('No article ID provided');
-      
-      console.log('Fetching news article:', id);
-      const { data, error } = await supabase
-        .from('news')
-        .select(`
-          *,
-          news_categories(id, name, color)
-        `)
-        .eq('id', id)
-        .eq('is_published', true)
-        .single();
-      
-      if (error) {
-        console.error('Error fetching article:', error);
-        throw error;
-      }
-      
-      console.log('Article fetched successfully:', data);
-      return data;
-    },
-    enabled: !!id,
-  });
-
-  const formatDate = (dateString: string) => {
-    try {
-      return format(new Date(dateString), "EEEE, MMMM do, yyyy");
-    } catch {
-      return dateString;
-    }
-  };
-
-  const getReadingTime = (content: string) => {
-    const words = content.replace(/<[^>]*>/g, '').split(' ').length;
-    const avgWordsPerMinute = 200;
-    return Math.ceil(words / avgWordsPerMinute);
-  };
+  const { data: article, isLoading, error } = useNewsArticle(id!);
 
   if (isLoading) {
     return (
@@ -185,7 +124,7 @@ const NewsArticle = () => {
                     <div className="flex items-center gap-6 text-rhino-gray">
                       <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4" />
-                        <span className="font-medium">{formatDate(article.created_at)}</span>
+                        <span className="font-medium">{formatDateTime(article.created_at)}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <User className="h-4 w-4" />
