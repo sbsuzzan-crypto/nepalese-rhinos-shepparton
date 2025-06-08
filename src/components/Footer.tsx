@@ -1,9 +1,11 @@
 
 import { Facebook, Instagram, Youtube } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAuth } from '@/hooks/useAuth';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const { user } = useAuth();
 
   return (
     <footer className="bg-rhino-navy text-white py-12">
@@ -95,7 +97,10 @@ const Footer = () => {
                 <a href="#" className="hover:opacity-100 hover:text-rhino-red transition-all duration-200">Privacy Policy</a>
                 <a href="#" className="hover:opacity-100 hover:text-rhino-red transition-all duration-200">Code of Conduct</a>
                 <a href="#" className="hover:opacity-100 hover:text-rhino-red transition-all duration-200">Child Safety</a>
-                <Link to="/auth" className="hover:opacity-100 hover:text-rhino-red transition-all duration-200">Admin</Link>
+                {/* Only show admin link if user is NOT authenticated */}
+                {!user && (
+                  <Link to="/auth" className="hover:opacity-100 hover:text-rhino-red transition-all duration-200">Admin</Link>
+                )}
               </div>
             </div>
           </div>

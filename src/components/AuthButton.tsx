@@ -1,7 +1,7 @@
 
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { LogIn, LogOut, Shield, Loader2 } from 'lucide-react';
+import { LogOut, Shield, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const AuthButton = () => {
@@ -16,6 +16,7 @@ const AuthButton = () => {
     );
   }
 
+  // Only show auth button if user is authenticated
   if (user) {
     return (
       <div className="flex items-center gap-2">
@@ -38,14 +39,8 @@ const AuthButton = () => {
     );
   }
 
-  return (
-    <Link to="/auth">
-      <Button variant="ghost" size="sm" className="text-rhino-red hover:text-red-700">
-        <LogIn className="h-4 w-4 mr-2" />
-        Admin Login
-      </Button>
-    </Link>
-  );
+  // Don't show anything for unauthenticated users
+  return null;
 };
 
 export default AuthButton;

@@ -5,11 +5,13 @@ import { Menu } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import MobileSidebar from "./MobileSidebar";
 import AuthButton from "./AuthButton";
+import { useAuth } from '@/hooks/useAuth';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
+  const { user } = useAuth();
 
   const navigation = [
     { name: "Home", href: "/" },
@@ -91,9 +93,12 @@ const Header = () => {
 
             {/* Auth Button and Mobile Menu */}
             <div className="flex items-center gap-2">
-              <div className="hidden md:block">
-                <AuthButton />
-              </div>
+              {/* Only show auth button on desktop and when user is authenticated */}
+              {user && (
+                <div className="hidden md:block">
+                  <AuthButton />
+                </div>
+              )}
               
               {/* Mobile Menu Button */}
               <Button
