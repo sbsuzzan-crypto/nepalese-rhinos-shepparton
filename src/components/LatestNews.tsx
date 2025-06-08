@@ -10,7 +10,10 @@ import NewsLoadingSkeleton from "@/components/news/NewsLoadingSkeleton";
 const LatestNews = () => {
   const { data: articles, isLoading, error } = useLatestNews(3);
 
+  console.log('LatestNews - articles:', articles, 'isLoading:', isLoading, 'error:', error);
+
   if (error) {
+    console.error('Error in LatestNews:', error);
     return (
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4">

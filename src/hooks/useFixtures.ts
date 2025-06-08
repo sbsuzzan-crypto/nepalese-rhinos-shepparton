@@ -23,7 +23,7 @@ export const useNextFixture = () => {
       }
       
       console.log('Next fixture fetched successfully:', data);
-      return data as Fixture | null;
+      return data;
     },
   });
 };

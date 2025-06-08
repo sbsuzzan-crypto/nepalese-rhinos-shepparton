@@ -7,6 +7,8 @@ import NoUpcomingMatches from "./fixtures/NoUpcomingMatches";
 const NextMatch = () => {
   const { data: fixture, isLoading, error } = useNextFixture();
 
+  console.log('NextMatch - fixture:', fixture, 'isLoading:', isLoading, 'error:', error);
+
   if (isLoading) {
     return <FixtureLoadingSkeleton />;
   }
@@ -17,6 +19,7 @@ const NextMatch = () => {
   }
 
   if (!fixture) {
+    console.log('No fixture found');
     return <NoUpcomingMatches />;
   }
 
