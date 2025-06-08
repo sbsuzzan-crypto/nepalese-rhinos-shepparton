@@ -166,6 +166,56 @@ export type Database = {
           },
         ]
       }
+      email_templates: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          html_content: string
+          id: string
+          is_active: boolean | null
+          name: string
+          subject: string
+          template_key: string
+          text_content: string | null
+          updated_at: string | null
+          variables: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          html_content: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          subject: string
+          template_key: string
+          text_content?: string | null
+          updated_at?: string | null
+          variables?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          html_content?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          subject?: string
+          template_key?: string
+          text_content?: string | null
+          updated_at?: string | null
+          variables?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           created_at: string | null
@@ -212,6 +262,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      feature_toggles: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          feature_key: string
+          id: string
+          is_enabled: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          feature_key: string
+          id?: string
+          is_enabled?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          feature_key?: string
+          id?: string
+          is_enabled?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       fixtures: {
         Row: {
@@ -709,27 +789,86 @@ export type Database = {
       }
       site_settings: {
         Row: {
+          category: Database["public"]["Enums"]["setting_category"] | null
           description: string | null
+          display_order: number | null
+          help_text: string | null
           id: string
+          is_required: boolean | null
+          is_sensitive: boolean | null
           key: string
+          setting_type: Database["public"]["Enums"]["setting_type"] | null
           updated_at: string | null
+          validation_rules: Json | null
           value: string | null
         }
         Insert: {
+          category?: Database["public"]["Enums"]["setting_category"] | null
           description?: string | null
+          display_order?: number | null
+          help_text?: string | null
           id?: string
+          is_required?: boolean | null
+          is_sensitive?: boolean | null
           key: string
+          setting_type?: Database["public"]["Enums"]["setting_type"] | null
           updated_at?: string | null
+          validation_rules?: Json | null
           value?: string | null
         }
         Update: {
+          category?: Database["public"]["Enums"]["setting_category"] | null
           description?: string | null
+          display_order?: number | null
+          help_text?: string | null
           id?: string
+          is_required?: boolean | null
+          is_sensitive?: boolean | null
           key?: string
+          setting_type?: Database["public"]["Enums"]["setting_type"] | null
           updated_at?: string | null
+          validation_rules?: Json | null
           value?: string | null
         }
         Relationships: []
+      }
+      site_themes: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          theme_config: Json
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          theme_config?: Json
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          theme_config?: Json
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_themes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sponsors: {
         Row: {
@@ -897,6 +1036,27 @@ export type Database = {
         | "cancelled"
         | "postponed"
       player_position: "goalkeeper" | "defender" | "midfielder" | "forward"
+      setting_category:
+        | "general"
+        | "visual_branding"
+        | "club_info"
+        | "feature_toggles"
+        | "communication"
+        | "security"
+        | "analytics"
+        | "integrations"
+        | "ecommerce"
+        | "mobile"
+      setting_type:
+        | "text"
+        | "textarea"
+        | "number"
+        | "boolean"
+        | "color"
+        | "email"
+        | "url"
+        | "json"
+        | "file"
       user_role: "admin" | "moderator"
     }
     CompositeTypes: {
@@ -1029,6 +1189,29 @@ export const Constants = {
       ],
       match_status: ["upcoming", "live", "completed", "cancelled", "postponed"],
       player_position: ["goalkeeper", "defender", "midfielder", "forward"],
+      setting_category: [
+        "general",
+        "visual_branding",
+        "club_info",
+        "feature_toggles",
+        "communication",
+        "security",
+        "analytics",
+        "integrations",
+        "ecommerce",
+        "mobile",
+      ],
+      setting_type: [
+        "text",
+        "textarea",
+        "number",
+        "boolean",
+        "color",
+        "email",
+        "url",
+        "json",
+        "file",
+      ],
       user_role: ["admin", "moderator"],
     },
   },
