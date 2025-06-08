@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import AdminLayout from "@/components/admin/AdminLayout";
 import { queryClient } from "./lib/queryClient";
 
 // Public pages
@@ -67,24 +68,26 @@ function App() {
                 <Route path="/become-a-sponsor" element={<BecomeASponsor />} />
                 <Route path="/auth" element={<Auth />} />
                 
-                {/* Admin Routes - Protected */}
-                <Route path="/admin" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                <Route path="/admin/news" element={<ProtectedRoute><NewsManagement /></ProtectedRoute>} />
-                <Route path="/admin/teams" element={<ProtectedRoute><TeamsManagement /></ProtectedRoute>} />
-                <Route path="/admin/players" element={<ProtectedRoute><PlayersManagement /></ProtectedRoute>} />
-                <Route path="/admin/staff" element={<ProtectedRoute><StaffManagement /></ProtectedRoute>} />
-                <Route path="/admin/fixtures" element={<ProtectedRoute><FixturesManagement /></ProtectedRoute>} />
-                <Route path="/admin/gallery" element={<ProtectedRoute><GalleryManagement /></ProtectedRoute>} />
-                <Route path="/admin/events" element={<ProtectedRoute><EventsManagement /></ProtectedRoute>} />
-                <Route path="/admin/announcements" element={<ProtectedRoute><AnnouncementsManagement /></ProtectedRoute>} />
-                <Route path="/admin/documents" element={<ProtectedRoute><DocumentsManagement /></ProtectedRoute>} />
-                <Route path="/admin/sponsors" element={<ProtectedRoute><SponsorsManagement /></ProtectedRoute>} />
-                <Route path="/admin/users" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
-                <Route path="/admin/messages" element={<ProtectedRoute><MessagesManagement /></ProtectedRoute>} />
-                <Route path="/admin/contact-submissions" element={<ProtectedRoute><ContactSubmissionsManagement /></ProtectedRoute>} />
-                <Route path="/admin/join-submissions" element={<ProtectedRoute><JoinSubmissionsManagement /></ProtectedRoute>} />
-                <Route path="/admin/supporters-messages" element={<ProtectedRoute><SupportersMessagesManagement /></ProtectedRoute>} />
-                <Route path="/admin/settings" element={<ProtectedRoute><SiteSettingsManagement /></ProtectedRoute>} />
+                {/* Admin Routes - All wrapped with AdminLayout */}
+                <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
+                  <Route index element={<Dashboard />} />
+                  <Route path="news" element={<NewsManagement />} />
+                  <Route path="teams" element={<TeamsManagement />} />
+                  <Route path="players" element={<PlayersManagement />} />
+                  <Route path="staff" element={<StaffManagement />} />
+                  <Route path="fixtures" element={<FixturesManagement />} />
+                  <Route path="gallery" element={<GalleryManagement />} />
+                  <Route path="events" element={<EventsManagement />} />
+                  <Route path="announcements" element={<AnnouncementsManagement />} />
+                  <Route path="documents" element={<DocumentsManagement />} />
+                  <Route path="sponsors" element={<SponsorsManagement />} />
+                  <Route path="users" element={<UserManagement />} />
+                  <Route path="messages" element={<MessagesManagement />} />
+                  <Route path="contact-submissions" element={<ContactSubmissionsManagement />} />
+                  <Route path="join-submissions" element={<JoinSubmissionsManagement />} />
+                  <Route path="supporters-messages" element={<SupportersMessagesManagement />} />
+                  <Route path="settings" element={<SiteSettingsManagement />} />
+                </Route>
                 
                 {/* 404 Route */}
                 <Route path="*" element={<NotFound />} />
