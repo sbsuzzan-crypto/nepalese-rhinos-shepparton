@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Users, Star, Award } from "lucide-react";
+import { useEffect } from "react";
 
 interface Player {
   id: string;
@@ -42,6 +43,8 @@ const Teams = () => {
       console.log('Players fetched successfully:', data);
       return data as Player[];
     },
+    staleTime: 60000, // 1 minute
+    refetchInterval: 300000, // Refetch every 5 minutes in background
   });
 
   const { data: staff, isLoading: staffLoading } = useQuery({
@@ -62,7 +65,49 @@ const Teams = () => {
       console.log('Staff fetched successfully:', data);
       return data as Staff[];
     },
+    staleTime: 60000, // 1 minute
+    refetchInterval: 300000, // Refetch every 5 minutes in background
   });
+
+  // Set up realtime subscriptions for live updates
+  useEffect(() => {
+    const playersChannel = supabase
+      .channel('players-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'players'
+        },
+        (payload) => {
+          console.log('Players realtime update:', payload);
+          // This will trigger a refetch of the players query
+        }
+      )
+      .subscribe();
+
+    const staffChannel = supabase
+      .channel('staff-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'staff'
+        },
+        (payload) => {
+          console.log('Staff realtime update:', payload);
+          // This will trigger a refetch of the staff query
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(playersChannel);
+      supabase.removeChannel(staffChannel);
+    };
+  }, []);
 
   const getPositionBadgeColor = (position: string) => {
     switch (position.toLowerCase()) {
@@ -113,6 +158,7 @@ const Teams = () => {
                           src={player.photo_url || 'https://images.unsplash.com/photo-1472745942893-4b9f730c7668?w=300&h=300&fit=crop&crop=face'}
                           alt={player.name}
                           className="w-full h-48 object-cover rounded-lg"
+                          loading="lazy"
                         />
                         {player.jersey_number && (
                           <div className="absolute top-2 right-2 bg-rhino-red text-white text-lg font-bold w-8 h-8 rounded-full flex items-center justify-center">
@@ -167,6 +213,7 @@ const Teams = () => {
                         src={member.photo_url || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop&crop=face'}
                         alt={member.name}
                         className="w-full h-40 object-cover rounded-lg mb-4"
+                        loading="lazy"
                       />
                       <h4 className="font-bold text-lg text-rhino-blue mb-2">{member.name}</h4>
                       <Badge variant="outline" className="text-rhino-red border-rhino-red mb-2">

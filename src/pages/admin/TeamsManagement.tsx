@@ -25,21 +25,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
 import { Switch } from '@/components/ui/switch';
 import { Users, Plus, Edit, Trash2, Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import CustomDeleteDialog from '@/components/admin/CustomDeleteDialog';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Team = Tables<'teams'>;
@@ -47,20 +37,29 @@ type Team = Tables<'teams'>;
 const TeamsManagement = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [teamToDelete, setTeamToDelete] = useState<Team | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: teams, isLoading } = useQuery({
-    queryKey: ['teams'],
+    queryKey: ['admin-teams'],
     queryFn: async () => {
+      console.log('Fetching teams...');
       const { data, error } = await supabase
         .from('teams')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching teams:', error);
+        throw error;
+      }
+      console.log('Teams fetched:', data);
       return data;
     },
+    staleTime: 30000, // 30 seconds
+    refetchInterval: 60000, // Refetch every minute in background
   });
 
   const addTeamMutation = useMutation({
@@ -70,14 +69,22 @@ const TeamsManagement = () => {
       category?: string;
       is_active: boolean;
     }) => {
+      console.log('Creating team:', teamData);
       const { error } = await supabase
         .from('teams')
         .insert([teamData]);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Create error:', error);
+        throw error;
+      }
+      console.log('Team created successfully');
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['teams'] });
+      // Invalidate and refetch immediately
+      queryClient.invalidateQueries({ queryKey: ['admin-teams'] });
+      queryClient.refetchQueries({ queryKey: ['admin-teams'] });
+      
       setIsDialogOpen(false);
       setEditingTeam(null);
       toast({
@@ -85,19 +92,35 @@ const TeamsManagement = () => {
         description: 'Team created successfully',
       });
     },
+    onError: (error: any) => {
+      console.error('Create mutation error:', error);
+      toast({
+        title: 'Error',
+        description: `Failed to create team: ${error.message}`,
+        variant: 'destructive',
+      });
+    },
   });
 
   const updateTeamMutation = useMutation({
     mutationFn: async ({ id, ...teamData }: Partial<Team> & { id: string }) => {
+      console.log('Updating team:', id, teamData);
       const { error } = await supabase
         .from('teams')
         .update(teamData)
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Update error:', error);
+        throw error;
+      }
+      console.log('Team updated successfully');
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['teams'] });
+      // Invalidate and refetch immediately
+      queryClient.invalidateQueries({ queryKey: ['admin-teams'] });
+      queryClient.refetchQueries({ queryKey: ['admin-teams'] });
+      
       setIsDialogOpen(false);
       setEditingTeam(null);
       toast({
@@ -105,22 +128,48 @@ const TeamsManagement = () => {
         description: 'Team updated successfully',
       });
     },
+    onError: (error: any) => {
+      console.error('Update mutation error:', error);
+      toast({
+        title: 'Error',
+        description: `Failed to update team: ${error.message}`,
+        variant: 'destructive',
+      });
+    },
   });
 
   const deleteTeamMutation = useMutation({
     mutationFn: async (id: string) => {
+      console.log('Deleting team with ID:', id);
       const { error } = await supabase
         .from('teams')
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Delete error:', error);
+        throw error;
+      }
+      console.log('Team deleted successfully');
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['teams'] });
+      // Invalidate and refetch immediately
+      queryClient.invalidateQueries({ queryKey: ['admin-teams'] });
+      queryClient.refetchQueries({ queryKey: ['admin-teams'] });
+      
       toast({
         title: 'Success',
         description: 'Team deleted successfully',
+      });
+      setDeleteDialogOpen(false);
+      setTeamToDelete(null);
+    },
+    onError: (error: any) => {
+      console.error('Delete mutation error:', error);
+      toast({
+        title: 'Error',
+        description: `Failed to delete team: ${error.message}`,
+        variant: 'destructive',
       });
     },
   });
@@ -148,8 +197,15 @@ const TeamsManagement = () => {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    deleteTeamMutation.mutate(id);
+  const handleDelete = (team: Team) => {
+    setTeamToDelete(team);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (teamToDelete) {
+      deleteTeamMutation.mutate(teamToDelete.id);
+    }
   };
 
   const activeTeams = teams?.filter(t => t.is_active) || [];
@@ -279,7 +335,10 @@ const TeamsManagement = () => {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="text-center py-8">Loading teams...</div>
+            <div className="text-center py-8">
+              <div className="inline-block w-8 h-8 border-4 border-rhino-red border-t-transparent rounded-full animate-spin"></div>
+              <p className="mt-2 text-gray-600">Loading teams...</p>
+            </div>
           ) : teams && teams.length > 0 ? (
             <Table>
               <TableHeader>
@@ -329,35 +388,14 @@ const TeamsManagement = () => {
                         >
                           <Edit className="w-4 h-4" />
                         </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-red-600 hover:text-red-700"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete Team</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Are you sure you want to delete "{team.name}"? 
-                                This action cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDelete(team.id)}
-                                className="bg-red-600 hover:bg-red-700"
-                              >
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-red-600 hover:text-red-700"
+                          onClick={() => handleDelete(team)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -373,6 +411,17 @@ const TeamsManagement = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Custom Delete Confirmation Dialog */}
+      <CustomDeleteDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={confirmDelete}
+        itemName={teamToDelete?.name || ''}
+        itemType="Team"
+        isLoading={deleteTeamMutation.isPending}
+        description={`Are you sure you want to delete "${teamToDelete?.name}"? This will remove the team from the system and cannot be undone.`}
+      />
     </div>
   );
 };
