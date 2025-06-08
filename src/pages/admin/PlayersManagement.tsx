@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,6 +15,15 @@ import { Trash2, Edit, Plus, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import FileUpload from '@/components/admin/FileUpload';
 import CustomDeleteDialog from '@/components/admin/CustomDeleteDialog';
+import SearchInput from '@/components/admin/SearchInput';
+import { 
+  Pagination, 
+  PaginationContent, 
+  PaginationItem, 
+  PaginationLink, 
+  PaginationNext, 
+  PaginationPrevious 
+} from '@/components/ui/pagination';
 
 interface Player {
   id: string;
@@ -24,30 +33,59 @@ interface Player {
   bio: string | null;
   photo_url: string | null;
   is_active: boolean;
+  team_id: string | null;
   created_at: string;
+}
+
+interface Team {
+  id: string;
+  name: string;
+  is_active: boolean;
 }
 
 const PlayersManagement = () => {
   const { isAdmin, isModerator } = useAuth();
   const [players, setPlayers] = useState<Player[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [playerToDelete, setPlayerToDelete] = useState<Player | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(6);
   const [formData, setFormData] = useState({
     name: '',
     position: 'forward' as 'goalkeeper' | 'defender' | 'midfielder' | 'forward',
     jersey_number: '',
     bio: '',
     photo_url: '',
+    team_id: '',
     is_active: true
   });
   const { toast } = useToast();
 
+  // Filter and paginate players
+  const filteredPlayers = useMemo(() => {
+    return players.filter(player => 
+      player.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      player.position.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (player.jersey_number && player.jersey_number.toString().includes(searchQuery))
+    );
+  }, [players, searchQuery]);
+
+  const paginatedPlayers = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return filteredPlayers.slice(startIndex, startIndex + pageSize);
+  }, [filteredPlayers, currentPage, pageSize]);
+
+  const totalPages = Math.ceil(filteredPlayers.length / pageSize);
+
   useEffect(() => {
     if (isAdmin || isModerator) {
       fetchPlayers();
+      fetchTeams();
       
       // Set up realtime subscription
       const channel = supabase
@@ -98,6 +136,27 @@ const PlayersManagement = () => {
     }
   };
 
+  const fetchTeams = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('teams')
+        .select('id, name, is_active')
+        .eq('is_active', true)
+        .order('name');
+
+      if (error) throw error;
+      setTeams(data || []);
+    } catch (error: any) {
+      console.error('Error fetching teams:', error);
+    }
+  };
+
+  const getTeamName = (teamId: string | null) => {
+    if (!teamId) return 'No Team';
+    const team = teams.find(t => t.id === teamId);
+    return team ? team.name : 'Unknown Team';
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -108,6 +167,7 @@ const PlayersManagement = () => {
         jersey_number: formData.jersey_number ? parseInt(formData.jersey_number) : null,
         bio: formData.bio || null,
         photo_url: formData.photo_url || null,
+        team_id: formData.team_id || null,
         is_active: formData.is_active
       };
 
@@ -158,6 +218,7 @@ const PlayersManagement = () => {
       jersey_number: player.jersey_number?.toString() || '',
       bio: player.bio || '',
       photo_url: player.photo_url || '',
+      team_id: player.team_id || '',
       is_active: player.is_active
     });
     setShowForm(true);
@@ -209,6 +270,7 @@ const PlayersManagement = () => {
       jersey_number: '',
       bio: '',
       photo_url: '',
+      team_id: '',
       is_active: true
     });
     setEditingPlayer(null);
@@ -258,6 +320,21 @@ const PlayersManagement = () => {
           <Plus className="h-4 w-4 mr-2" />
           Add Player
         </Button>
+      </div>
+
+      {/* Search and Stats */}
+      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+        <SearchInput
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Search players by name, position, or jersey number..."
+          className="w-full sm:w-96"
+        />
+        <div className="flex gap-4 text-sm text-gray-600">
+          <span>Total: {players.length}</span>
+          <span>Active: {players.filter(p => p.is_active).length}</span>
+          <span>Showing: {filteredPlayers.length}</span>
+        </div>
       </div>
 
       {showForm && (
@@ -315,6 +392,26 @@ const PlayersManagement = () => {
                   </Select>
                 </div>
 
+                <div>
+                  <Label htmlFor="team_id" className="text-gray-700">Team</Label>
+                  <Select
+                    value={formData.team_id}
+                    onValueChange={(value) => setFormData({ ...formData, team_id: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a team" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">No Team</SelectItem>
+                      {teams.map((team) => (
+                        <SelectItem key={team.id} value={team.id}>
+                          {team.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div className="flex items-center space-x-2">
                   <Switch
                     id="is_active"
@@ -360,7 +457,7 @@ const PlayersManagement = () => {
       )}
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {players.map((player) => (
+        {paginatedPlayers.map((player) => (
           <Card key={player.id} className={!player.is_active ? 'opacity-60' : ''}>
             <CardHeader>
               <div className="flex justify-between items-start">
@@ -371,9 +468,12 @@ const PlayersManagement = () => {
                       <Badge variant="outline">#{player.jersey_number}</Badge>
                     )}
                   </CardTitle>
-                  <CardDescription className="flex items-center gap-2">
+                  <CardDescription className="flex items-center gap-2 flex-wrap">
                     <Badge className={`${getPositionColor(player.position)} text-white`}>
                       {player.position}
+                    </Badge>
+                    <Badge variant="secondary">
+                      {getTeamName(player.team_id)}
                     </Badge>
                     {!player.is_active && (
                       <Badge variant="secondary">Inactive</Badge>
@@ -414,6 +514,52 @@ const PlayersManagement = () => {
           </Card>
         ))}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious 
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                />
+              </PaginationItem>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <PaginationItem key={page}>
+                  <PaginationLink
+                    onClick={() => setCurrentPage(page)}
+                    isActive={currentPage === page}
+                    className="cursor-pointer"
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+              <PaginationItem>
+                <PaginationNext 
+                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
+
+      {filteredPlayers.length === 0 && searchQuery && (
+        <Card>
+          <CardContent className="text-center py-12">
+            <Users className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+            <h3 className="text-lg font-semibold mb-2 text-gray-900">No players found</h3>
+            <p className="text-gray-600 mb-4">No players match your search criteria</p>
+            <Button onClick={() => setSearchQuery('')} variant="outline">
+              Clear Search
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {players.length === 0 && (
         <Card>

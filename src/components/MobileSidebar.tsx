@@ -1,8 +1,9 @@
 
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { X } from "lucide-react";
+import { X, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from '@/hooks/useAuth';
 
 interface MobileSidebarProps {
   isOpen: boolean;
@@ -11,6 +12,7 @@ interface MobileSidebarProps {
 
 const MobileSidebar = ({ isOpen, onClose }: MobileSidebarProps) => {
   const location = useLocation();
+  const { user } = useAuth();
 
   const navigation = [
     { name: "Home", href: "/" },
@@ -99,6 +101,22 @@ const MobileSidebar = ({ isOpen, onClose }: MobileSidebarProps) => {
                   {item.name}
                 </Link>
               ))}
+              
+              {/* Admin Panel Link for authenticated users */}
+              {user && (
+                <Link
+                  to="/admin"
+                  className={`flex items-center gap-2 px-4 py-3 rounded-lg font-medium transition-all duration-200 animate-in slide-in-from-right ${
+                    location.pathname.startsWith('/admin')
+                      ? "text-rhino-red bg-rhino-red/10 border-l-4 border-rhino-red"
+                      : "text-rhino-blue hover:text-rhino-red hover:bg-gray-100"
+                  }`}
+                  style={{ animationDelay: `${navigation.length * 50}ms` }}
+                >
+                  <Shield className="h-4 w-4" />
+                  Admin Panel
+                </Link>
+              )}
             </div>
           </nav>
 

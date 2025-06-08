@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,11 +25,27 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Users, Plus, Edit, Trash2, Building } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import FileUpload from '@/components/admin/FileUpload';
 import CustomDeleteDialog from '@/components/admin/CustomDeleteDialog';
+import SearchInput from '@/components/admin/SearchInput';
+import { 
+  Pagination, 
+  PaginationContent, 
+  PaginationItem, 
+  PaginationLink, 
+  PaginationNext, 
+  PaginationPrevious 
+} from '@/components/ui/pagination';
 import type { Tables } from '@/integrations/supabase/types';
 
 // Use the actual database schema type
@@ -40,6 +56,10 @@ const StaffManagement = () => {
   const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [staffToDelete, setStaffToDelete] = useState<StaffMember | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(10);
   const [formData, setFormData] = useState({
     name: '',
     role: '',
@@ -62,6 +82,32 @@ const StaffManagement = () => {
       return data;
     },
   });
+
+  // Filter and paginate staff
+  const filteredStaff = useMemo(() => {
+    if (!staff) return [];
+    
+    return staff.filter(member => {
+      const matchesSearch = member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           member.role.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesRole = roleFilter === 'all' || member.role.toLowerCase().includes(roleFilter.toLowerCase());
+      return matchesSearch && matchesRole;
+    });
+  }, [staff, searchQuery, roleFilter]);
+
+  const paginatedStaff = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return filteredStaff.slice(startIndex, startIndex + pageSize);
+  }, [filteredStaff, currentPage, pageSize]);
+
+  const totalPages = Math.ceil(filteredStaff.length / pageSize);
+
+  // Get unique roles for filter dropdown
+  const uniqueRoles = useMemo(() => {
+    if (!staff) return [];
+    const roles = staff.map(member => member.role);
+    return Array.from(new Set(roles)).sort();
+  }, [staff]);
 
   const addStaffMutation = useMutation({
     mutationFn: async (staffData: {
@@ -327,6 +373,35 @@ const StaffManagement = () => {
         </Card>
       </div>
 
+      {/* Search and Filter Controls */}
+      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+        <div className="flex flex-col sm:flex-row gap-4 items-center w-full sm:w-auto">
+          <SearchInput
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Search staff by name or role..."
+            className="w-full sm:w-96"
+          />
+          <Select value={roleFilter} onValueChange={setRoleFilter}>
+            <SelectTrigger className="w-full sm:w-48">
+              <SelectValue placeholder="Filter by role" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Roles</SelectItem>
+              {uniqueRoles.map((role) => (
+                <SelectItem key={role} value={role.toLowerCase()}>
+                  {role}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex gap-4 text-sm text-gray-600">
+          <span>Total: {staff?.length || 0}</span>
+          <span>Showing: {filteredStaff.length}</span>
+        </div>
+      </div>
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -338,80 +413,131 @@ const StaffManagement = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {staff && staff.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Added</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {staff.map((member) => (
-                  <TableRow key={member.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        {member.photo_url ? (
-                          <img 
-                            src={member.photo_url} 
-                            alt={member.name}
-                            className="w-10 h-10 rounded-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center">
-                            <Users className="w-5 h-5 text-slate-500" />
+          {filteredStaff && filteredStaff.length > 0 ? (
+            <>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Role</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Added</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedStaff.map((member) => (
+                      <TableRow key={member.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            {member.photo_url ? (
+                              <img 
+                                src={member.photo_url} 
+                                alt={member.name}
+                                className="w-10 h-10 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center">
+                                <Users className="w-5 h-5 text-slate-500" />
+                              </div>
+                            )}
+                            <div>
+                              <p className="font-medium text-slate-900">{member.name}</p>
+                              {member.bio && (
+                                <p className="text-sm text-slate-500 truncate max-w-xs">{member.bio}</p>
+                              )}
+                            </div>
                           </div>
-                        )}
-                        <div>
-                          <p className="font-medium text-slate-900">{member.name}</p>
-                          {member.bio && (
-                            <p className="text-sm text-slate-500 truncate max-w-xs">{member.bio}</p>
-                          )}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Building className="w-4 h-4 text-slate-400" />
-                        <span className="font-medium">{member.role}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={member.is_active ? 'default' : 'secondary'}>
-                        {member.is_active ? 'Active' : 'Inactive'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm text-slate-600">
-                        {member.created_at ? format(new Date(member.created_at), 'MMM dd, yyyy') : 'N/A'}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEdit(member)}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDelete(member)}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Building className="w-4 h-4 text-slate-400" />
+                            <span className="font-medium">{member.role}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={member.is_active ? 'default' : 'secondary'}>
+                            {member.is_active ? 'Active' : 'Inactive'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm text-slate-600">
+                            {member.created_at ? format(new Date(member.created_at), 'MMM dd, yyyy') : 'N/A'}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEdit(member)}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDelete(member)}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex justify-center mt-6">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious 
+                          onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                          className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                        />
+                      </PaginationItem>
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                        <PaginationItem key={page}>
+                          <PaginationLink
+                            onClick={() => setCurrentPage(page)}
+                            isActive={currentPage === page}
+                            className="cursor-pointer"
+                          >
+                            {page}
+                          </PaginationLink>
+                        </PaginationItem>
+                      ))}
+                      <PaginationItem>
+                        <PaginationNext 
+                          onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                          className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
+            </>
+          ) : searchQuery || roleFilter !== 'all' ? (
+            <div className="text-center py-12">
+              <Users className="w-12 h-12 text-slate-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-slate-900 mb-2">No staff members found</h3>
+              <p className="text-slate-600 mb-4">No staff members match your search criteria.</p>
+              <div className="flex gap-2 justify-center">
+                <Button onClick={() => setSearchQuery('')} variant="outline">
+                  Clear Search
+                </Button>
+                <Button onClick={() => setRoleFilter('all')} variant="outline">
+                  Clear Filters
+                </Button>
+              </div>
+            </div>
           ) : (
             <div className="text-center py-12">
               <Users className="w-12 h-12 text-slate-400 mx-auto mb-4" />
