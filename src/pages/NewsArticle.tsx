@@ -20,7 +20,7 @@ interface NewsArticle {
   featured_image_url: string | null;
   published_at: string;
   created_at: string;
-  author: string | null;
+  author_id: string | null;
 }
 
 const NewsArticle = () => {
@@ -141,10 +141,10 @@ const NewsArticle = () => {
                       <span>{formatTime(article.published_at || article.created_at)}</span>
                     </div>
                   )}
-                  {article.author && (
+                  {article.author_id && (
                     <div className="flex items-center gap-2">
                       <User size={16} />
-                      <span>By {article.author}</span>
+                      <span>By Admin</span>
                     </div>
                   )}
                 </div>
