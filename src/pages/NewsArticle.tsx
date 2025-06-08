@@ -18,11 +18,12 @@ interface NewsArticle {
   title: string;
   content: string;
   excerpt?: string;
-  image_url?: string;
-  author: string;
+  featured_image_url?: string;
+  author_id?: string;
   created_at: string;
-  is_featured: boolean;
-  status: string;
+  is_published: boolean;
+  published_at?: string;
+  updated_at: string;
 }
 
 const NewsArticle = () => {
@@ -38,7 +39,7 @@ const NewsArticle = () => {
         .from('news')
         .select('*')
         .eq('id', id)
-        .eq('status', 'published')
+        .eq('is_published', true)
         .single();
       
       if (error) {
@@ -108,7 +109,7 @@ const NewsArticle = () => {
       <SEOHead
         title={article.title}
         description={article.excerpt || article.content.replace(/<[^>]*>/g, '').substring(0, 160)}
-        image={article.image_url}
+        image={article.featured_image_url}
         type="article"
       />
       <Header />
@@ -141,7 +142,7 @@ const NewsArticle = () => {
                   </div>
                   <div className="flex items-center gap-2">
                     <User className="h-4 w-4" />
-                    <span>{article.author}</span>
+                    <span>Admin</span>
                   </div>
                 </div>
                 
@@ -152,10 +153,10 @@ const NewsArticle = () => {
                 />
               </div>
 
-              {article.image_url && (
+              {article.featured_image_url && (
                 <div className="aspect-video overflow-hidden rounded-lg mb-8">
                   <img
-                    src={article.image_url}
+                    src={article.featured_image_url}
                     alt={article.title}
                     className="w-full h-full object-cover"
                   />

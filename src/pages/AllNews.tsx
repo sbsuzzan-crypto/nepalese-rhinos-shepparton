@@ -18,11 +18,12 @@ interface NewsArticle {
   title: string;
   content: string;
   excerpt?: string;
-  image_url?: string;
-  author: string;
+  featured_image_url?: string;
+  author_id?: string;
   created_at: string;
-  is_featured: boolean;
-  status: string;
+  is_published: boolean;
+  published_at?: string;
+  updated_at: string;
 }
 
 const AllNews = () => {
@@ -37,11 +38,11 @@ const AllNews = () => {
       let query = supabase
         .from('news')
         .select('*')
-        .eq('status', 'published')
+        .eq('is_published', true)
         .order('created_at', { ascending: false });
 
       if (searchTerm) {
-        query = query.or(`title.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%,author.ilike.%${searchTerm}%`);
+        query = query.or(`title.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%`);
       }
 
       const { data, error } = await query;
@@ -149,10 +150,10 @@ const AllNews = () => {
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                   {paginatedArticles.map((article) => (
                     <Card key={article.id} className="overflow-hidden hover:shadow-lg transition-shadow group">
-                      {article.image_url && (
+                      {article.featured_image_url && (
                         <div className="aspect-video overflow-hidden">
                           <img
-                            src={article.image_url}
+                            src={article.featured_image_url}
                             alt={article.title}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           />
@@ -166,7 +167,7 @@ const AllNews = () => {
                           </div>
                           <div className="flex items-center gap-1">
                             <User className="h-4 w-4" />
-                            <span>{article.author}</span>
+                            <span>Admin</span>
                           </div>
                         </div>
                         
