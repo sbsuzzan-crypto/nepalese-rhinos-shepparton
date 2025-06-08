@@ -1,40 +1,67 @@
 
-import { format } from "date-fns";
+import { format, parseISO } from 'date-fns';
 
-export const formatDate = (dateString: string) => {
+export const formatDate = (dateString: string): string => {
   try {
-    return format(new Date(dateString), "MMMM do, yyyy");
-  } catch {
+    const date = parseISO(dateString);
+    return format(date, 'MMM dd, yyyy');
+  } catch (error) {
+    console.error('Error formatting date:', error);
     return dateString;
   }
 };
 
-export const formatDateTime = (dateString: string) => {
+export const formatTime = (timeString: string): string => {
   try {
-    return format(new Date(dateString), "EEEE, MMMM do, yyyy");
-  } catch {
+    // Handle time format like "15:30:00" or "15:30"
+    const timeParts = timeString.split(':');
+    const hours = parseInt(timeParts[0], 10);
+    const minutes = timeParts[1];
+    
+    // Convert to 12-hour format
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+    
+    return `${displayHours}:${minutes} ${period}`;
+  } catch (error) {
+    console.error('Error formatting time:', error);
+    return timeString;
+  }
+};
+
+export const formatDateTime = (dateTimeString: string): string => {
+  try {
+    const date = parseISO(dateTimeString);
+    return format(date, 'MMM dd, yyyy HH:mm');
+  } catch (error) {
+    console.error('Error formatting datetime:', error);
+    return dateTimeString;
+  }
+};
+
+export const truncateText = (text: string, maxLength: number = 150): string => {
+  if (text.length <= maxLength) return text;
+  return text.substring(0, maxLength).trim() + '...';
+};
+
+export const formatRelativeTime = (dateString: string): string => {
+  try {
+    const date = parseISO(dateString);
+    const now = new Date();
+    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
+    
+    if (diffInHours < 1) {
+      return 'Just now';
+    } else if (diffInHours < 24) {
+      return `${Math.floor(diffInHours)} hour${Math.floor(diffInHours) > 1 ? 's' : ''} ago`;
+    } else if (diffInHours < 168) { // 7 days
+      const days = Math.floor(diffInHours / 24);
+      return `${days} day${days > 1 ? 's' : ''} ago`;
+    } else {
+      return formatDate(dateString);
+    }
+  } catch (error) {
+    console.error('Error formatting relative time:', error);
     return dateString;
   }
-};
-
-export const formatTime = (dateString: string) => {
-  try {
-    return format(new Date(dateString), "h:mm a");
-  } catch {
-    return "TBD";
-  }
-};
-
-export const truncateText = (text: string, maxLength: number) => {
-  return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
-};
-
-export const getReadingTime = (content: string) => {
-  const words = content.replace(/<[^>]*>/g, '').split(' ').length;
-  const avgWordsPerMinute = 200;
-  return Math.ceil(words / avgWordsPerMinute);
-};
-
-export const stripHtml = (html: string) => {
-  return html.replace(/<[^>]*>/g, '');
 };

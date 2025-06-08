@@ -1,56 +1,44 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Calendar, MapPin, Users, Clock } from "lucide-react";
-import { Fixture } from "@/types";
-import { formatDateTime, formatTime } from "@/utils/formatters";
+import { Badge } from "@/components/ui/badge";
+import { Calendar, MapPin, Trophy } from "lucide-react";
+import { formatDate, formatTime } from "@/utils/formatters";
+import type { Fixture } from "@/types";
 
 interface FixtureCardProps {
   fixture: Fixture;
 }
 
-const FixtureCard: React.FC<FixtureCardProps> = ({ fixture }) => {
-  const homeTeam = fixture.is_home ? "Nepalese Rhinos FC" : fixture.opponent;
-  const awayTeam = fixture.is_home ? fixture.opponent : "Nepalese Rhinos FC";
-
+const FixtureCard = ({ fixture }: FixtureCardProps) => {
   return (
     <Card className="bg-white shadow-xl border-0">
       <CardHeader className="bg-gradient-to-r from-rhino-blue to-rhino-navy text-white">
-        <CardTitle className="text-2xl text-center">Match Day</CardTitle>
+        <CardTitle className="text-center text-2xl font-bold">Next Match</CardTitle>
       </CardHeader>
       <CardContent className="p-8">
         <div className="grid md:grid-cols-3 gap-8 items-center">
           {/* Home Team */}
           <div className="text-center">
-            {homeTeam.toLowerCase().includes('rhinos') ? (
-              <img 
-                src="/lovable-uploads/6c39d309-610c-4c6d-8c26-4de7cddfd60a.png" 
-                alt={homeTeam} 
-                className="h-20 w-20 mx-auto mb-4"
-              />
-            ) : (
-              <div className="h-20 w-20 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
-                <Users size={32} className="text-gray-500" />
-              </div>
-            )}
-            <h3 className="text-xl font-bold text-rhino-blue">{homeTeam}</h3>
-            <p className="text-rhino-gray">Home</p>
+            <div className="w-20 h-20 bg-rhino-red rounded-full flex items-center justify-center mx-auto mb-4">
+              <Trophy className="h-10 w-10 text-white" />
+            </div>
+            <h3 className="text-xl font-bold text-rhino-blue mb-2">{fixture.home_team}</h3>
+            <Badge variant="secondary" className="text-sm">Home</Badge>
           </div>
 
           {/* Match Details */}
           <div className="text-center">
             <div className="text-4xl font-bold text-rhino-red mb-2">VS</div>
-            <div className="space-y-2 text-rhino-gray">
-              <div className="flex items-center justify-center gap-2">
-                <Calendar size={16} />
-                <span>{formatDateTime(fixture.match_date)}</span>
+            <div className="space-y-2">
+              <div className="flex items-center justify-center gap-2 text-rhino-gray">
+                <Calendar className="h-4 w-4" />
+                <span>{formatDate(fixture.match_date)}</span>
               </div>
-              <div className="flex items-center justify-center gap-2">
-                <Clock size={16} />
-                <span className="text-xl font-semibold">{formatTime(fixture.match_date)}</span>
+              <div className="text-lg font-semibold text-rhino-blue">
+                {formatTime(fixture.match_time)}
               </div>
-              <div className="flex items-center justify-center gap-2">
-                <MapPin size={16} />
+              <div className="flex items-center justify-center gap-2 text-rhino-gray">
+                <MapPin className="h-4 w-4" />
                 <span>{fixture.venue}</span>
               </div>
             </div>
@@ -58,26 +46,12 @@ const FixtureCard: React.FC<FixtureCardProps> = ({ fixture }) => {
 
           {/* Away Team */}
           <div className="text-center">
-            {awayTeam.toLowerCase().includes('rhinos') ? (
-              <img 
-                src="/lovable-uploads/6c39d309-610c-4c6d-8c26-4de7cddfd60a.png" 
-                alt={awayTeam} 
-                className="h-20 w-20 mx-auto mb-4"
-              />
-            ) : (
-              <div className="h-20 w-20 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
-                <Users size={32} className="text-gray-500" />
-              </div>
-            )}
-            <h3 className="text-xl font-bold text-rhino-blue">{awayTeam}</h3>
-            <p className="text-rhino-gray">Away</p>
+            <div className="w-20 h-20 bg-slate-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Trophy className="h-10 w-10 text-white" />
+            </div>
+            <h3 className="text-xl font-bold text-rhino-blue mb-2">{fixture.away_team}</h3>
+            <Badge variant="outline" className="text-sm">Away</Badge>
           </div>
-        </div>
-
-        <div className="mt-8 text-center">
-          <Button className="bg-rhino-red hover:bg-red-700 text-white">
-            Get Directions to Venue
-          </Button>
         </div>
       </CardContent>
     </Card>
