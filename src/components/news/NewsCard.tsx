@@ -97,7 +97,7 @@ const NewsCard = ({ article, variant = 'default' }: NewsCardProps) => {
 
           {/* Excerpt */}
           {!isCompact && (
-            <p className={`text-slate-600 line-clamp-3 mb-3 sm:mb-4 ${
+            <p className={`text-slate-700 line-clamp-3 mb-3 sm:mb-4 ${
               isFeatured ? 'text-base' : 'text-sm'
             }`}>
               {excerpt}
@@ -105,7 +105,7 @@ const NewsCard = ({ article, variant = 'default' }: NewsCardProps) => {
           )}
 
           {/* Meta Information */}
-          <div className="flex items-center justify-between text-xs text-slate-500">
+          <div className="flex items-center justify-between text-xs text-slate-600">
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1">
                 <Calendar className="w-3 h-3" />

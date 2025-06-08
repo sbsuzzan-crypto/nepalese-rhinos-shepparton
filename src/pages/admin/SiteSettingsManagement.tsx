@@ -76,7 +76,7 @@ const SiteSettingsManagement = () => {
       <div className="space-y-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Advanced Site Settings</h1>
-          <p className="text-slate-600">Configure your website's appearance, functionality, and integrations</p>
+          <p className="text-slate-700">Configure your website's appearance, functionality, and integrations</p>
         </div>
 
         <SettingsProgress 

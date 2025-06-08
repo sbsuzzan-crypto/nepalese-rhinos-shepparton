@@ -18,13 +18,13 @@ const SettingsCategory = ({
   return (
     <Card className="border-l-4 border-l-rhino-red">
       <CardHeader>
-        <CardTitle className="flex items-center gap-3">
+        <CardTitle className="flex items-center gap-3 text-slate-900">
           <div className="p-2 bg-rhino-red/10 rounded-lg">
             <Icon className="w-5 h-5 text-rhino-red" />
           </div>
           {title}
         </CardTitle>
-        <CardDescription>{description}</CardDescription>
+        <CardDescription className="text-slate-600">{description}</CardDescription>
       </CardHeader>
       <CardContent>{children}</CardContent>
     </Card>

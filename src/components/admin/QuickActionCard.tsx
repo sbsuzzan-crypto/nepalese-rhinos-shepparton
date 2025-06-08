@@ -27,8 +27,8 @@ const QuickActionCard = ({
               <Icon className="h-6 w-6" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-gray-900 mb-2 group-hover:text-rhino-red transition-colors duration-300">{title}</h3>
-              <p className="text-sm text-gray-600 leading-relaxed">{description}</p>
+              <h3 className="font-semibold text-slate-900 mb-2 group-hover:text-rhino-red transition-colors duration-300">{title}</h3>
+              <p className="text-sm text-slate-700 leading-relaxed">{description}</p>
             </div>
           </div>
           <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-rhino-red to-red-700 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>

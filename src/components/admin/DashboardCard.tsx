@@ -36,7 +36,7 @@ const DashboardCard = ({
     >
       <Card className="relative overflow-hidden border-0 shadow-lg bg-white">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-gray-600">
+          <CardTitle className="text-sm font-medium text-slate-700">
             {title}
           </CardTitle>
           <div className={`p-3 rounded-xl ${iconBg} shadow-md`}>
@@ -45,7 +45,7 @@ const DashboardCard = ({
         </CardHeader>
         <CardContent>
           <div className="flex items-baseline gap-2">
-            <div className="text-2xl font-bold text-gray-900">{value}</div>
+            <div className="text-2xl font-bold text-slate-900">{value}</div>
             {trend && (
               <span className={`text-sm font-medium ${
                 trend.isPositive ? 'text-emerald-600' : 'text-red-600'
@@ -55,7 +55,7 @@ const DashboardCard = ({
             )}
           </div>
           {description && (
-            <p className="text-xs text-gray-500 mt-1">{description}</p>
+            <p className="text-xs text-slate-600 mt-1">{description}</p>
           )}
           <div className={`absolute bottom-0 left-0 w-full h-1 ${color}`}></div>
         </CardContent>

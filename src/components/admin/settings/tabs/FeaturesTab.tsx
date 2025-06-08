@@ -15,7 +15,7 @@ const FeaturesTab = ({ featureToggles }: FeaturesTabProps) => {
     }
     acc[toggle.category].push(toggle);
     return acc;
-  }, {} as Record<string, typeof featureToggles>) || {};
+  }, {} as Record<string, any[]>) || {};
 
   return (
     <TabsContent value="features">
@@ -27,7 +27,7 @@ const FeaturesTab = ({ featureToggles }: FeaturesTabProps) => {
         <div className="space-y-6">
           {Object.entries(groupedToggles).map(([category, toggles]) => (
             <div key={category} className="space-y-3">
-              <h3 className="text-lg font-semibold capitalize">
+              <h3 className="text-lg font-semibold text-slate-900 capitalize">
                 {category.replace(/_/g, ' ')} Features
               </h3>
               <div className="grid gap-3 md:grid-cols-2">
