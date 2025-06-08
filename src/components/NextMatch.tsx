@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -138,9 +137,9 @@ const NextMatch = () => {
     );
   }
 
-  // Determine home and away teams based on is_home flag
-  const homeTeam = nextFixture.is_home ? "Birmingham Rhinos" : nextFixture.opponent;
-  const awayTeam = nextFixture.is_home ? nextFixture.opponent : "Birmingham Rhinos";
+  // Determine home and away teams based on is_home flag - Fixed team name
+  const homeTeam = nextFixture.is_home ? "Nepalese Rhinos FC" : nextFixture.opponent;
+  const awayTeam = nextFixture.is_home ? nextFixture.opponent : "Nepalese Rhinos FC";
 
   return (
     <section className="py-16 bg-gray-50">

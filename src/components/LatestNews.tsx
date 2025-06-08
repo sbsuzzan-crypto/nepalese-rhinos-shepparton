@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar, ArrowRight } from "lucide-react";
 import { format } from "date-fns";
+import { Link } from "react-router-dom";
 
 interface NewsItem {
   id: string;
@@ -93,36 +94,38 @@ const LatestNews = () => {
           ) : news && news.length > 0 ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {news.map((article, index) => (
-                <Card key={article.id} className={`overflow-hidden hover:shadow-lg transition-shadow cursor-pointer ${index === 0 ? 'md:col-span-2 lg:col-span-1' : ''}`}>
-                  <div className="relative">
-                    <img 
-                      src={article.featured_image_url || 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=600&h=400&fit=crop'}
-                      alt={article.title}
-                      className="w-full h-48 object-cover"
-                    />
-                    <div className="absolute top-4 left-4">
-                      <Badge className="bg-rhino-red text-white">News</Badge>
+                <Link key={article.id} to={`/news/${article.id}`}>
+                  <Card className={`overflow-hidden hover:shadow-lg transition-shadow cursor-pointer ${index === 0 ? 'md:col-span-2 lg:col-span-1' : ''}`}>
+                    <div className="relative">
+                      <img 
+                        src={article.featured_image_url || 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=600&h=400&fit=crop'}
+                        alt={article.title}
+                        className="w-full h-48 object-cover"
+                      />
+                      <div className="absolute top-4 left-4">
+                        <Badge className="bg-rhino-red text-white">News</Badge>
+                      </div>
                     </div>
-                  </div>
-                  <CardHeader>
-                    <div className="flex items-center gap-2 text-sm text-rhino-gray mb-2">
-                      <Calendar size={14} />
-                      <span>{formatDate(article.published_at || article.created_at)}</span>
-                    </div>
-                    <CardTitle className="text-lg hover:text-rhino-red transition-colors line-clamp-2">
-                      {article.title}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-rhino-gray mb-4 line-clamp-3">
-                      {article.excerpt || article.content.substring(0, 150) + '...'}
-                    </p>
-                    <div className="flex items-center text-rhino-red font-semibold hover:text-rhino-blue transition-colors">
-                      <span>Read More</span>
-                      <ArrowRight size={16} className="ml-2" />
-                    </div>
-                  </CardContent>
-                </Card>
+                    <CardHeader>
+                      <div className="flex items-center gap-2 text-sm text-rhino-gray mb-2">
+                        <Calendar size={14} />
+                        <span>{formatDate(article.published_at || article.created_at)}</span>
+                      </div>
+                      <CardTitle className="text-lg hover:text-rhino-red transition-colors line-clamp-2">
+                        {article.title}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-rhino-gray mb-4 line-clamp-3">
+                        {article.excerpt || article.content.substring(0, 150) + '...'}
+                      </p>
+                      <div className="flex items-center text-rhino-red font-semibold hover:text-rhino-blue transition-colors">
+                        <span>Read More</span>
+                        <ArrowRight size={16} className="ml-2" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
               ))}
             </div>
           ) : (

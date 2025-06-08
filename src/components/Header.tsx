@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import MobileSidebar from "./MobileSidebar";
+import AuthButton from "./AuthButton";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -88,15 +89,22 @@ const Header = () => {
               ))}
             </nav>
 
-            {/* Mobile Menu Button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="md:hidden text-rhino-blue hover:text-rhino-red hover:bg-rhino-red/5 transition-all duration-200"
-              onClick={() => setIsMenuOpen(true)}
-            >
-              <Menu size={24} />
-            </Button>
+            {/* Auth Button and Mobile Menu */}
+            <div className="flex items-center gap-2">
+              <div className="hidden md:block">
+                <AuthButton />
+              </div>
+              
+              {/* Mobile Menu Button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="md:hidden text-rhino-blue hover:text-rhino-red hover:bg-rhino-red/5 transition-all duration-200"
+                onClick={() => setIsMenuOpen(true)}
+              >
+                <Menu size={24} />
+              </Button>
+            </div>
           </div>
         </div>
       </header>

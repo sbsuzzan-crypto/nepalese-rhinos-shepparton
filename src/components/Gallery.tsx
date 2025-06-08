@@ -154,7 +154,7 @@ const Gallery = () => {
           )}
 
           <div className="text-center mt-12">
-            <Link to="/gallery/all">
+            <Link to="/all-gallery">
               <button className="bg-rhino-red text-white px-8 py-3 rounded-lg font-semibold hover:bg-red-700 transition-colors">
                 View Full Gallery
               </button>

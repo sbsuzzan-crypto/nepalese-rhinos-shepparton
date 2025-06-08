@@ -17,6 +17,7 @@ import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import AllGallery from "./pages/AllGallery";
 import GalleryPage from "./pages/GalleryPage";
+import NewsArticle from "./pages/NewsArticle";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminLayout from "./components/admin/AdminLayout";
 import Dashboard from "./pages/admin/Dashboard";
@@ -55,6 +56,7 @@ const App = () => (
             <Route path="/contact" element={<Contact />} />
             <Route path="/join-us" element={<JoinUs />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/news/:id" element={<NewsArticle />} />
             
             <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminLayout /></ProtectedRoute>}>
               <Route index element={<Dashboard />} />
