@@ -1,4 +1,3 @@
-
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +11,7 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { Calendar, User, ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
+import NewsComments from "@/components/NewsComments";
 
 interface NewsArticle {
   id: string;
@@ -181,6 +181,9 @@ const NewsArticle = () => {
                 />
               </div>
             </div>
+
+            {/* Comments Section */}
+            <NewsComments newsId={article.id} />
 
             {/* Back to News */}
             <div className="mt-12 text-center">
