@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -84,7 +83,6 @@ const FanPoll = () => {
     queryFn: async () => {
       if (!currentPoll?.id) return [];
       
-      // Check if user has already voted (by IP for now)
       const { data, error } = await supabase
         .from('poll_votes')
         .select('option_id')
@@ -107,7 +105,7 @@ const FanPoll = () => {
       const votes = optionIds.map(optionId => ({
         poll_id: currentPoll.id,
         option_id: optionId,
-        voter_ip: 'anonymous', // In a real app, you'd get the actual IP
+        voter_ip: 'anonymous',
       }));
 
       const { error } = await supabase
@@ -116,12 +114,20 @@ const FanPoll = () => {
       
       if (error) throw error;
 
-      // Update vote counts
+      // Update vote counts manually since we can't use the RPC function
       for (const optionId of optionIds) {
-        const { error: updateError } = await supabase
-          .rpc('increment_vote_count', { option_id: optionId });
+        const { data: currentOption } = await supabase
+          .from('poll_options')
+          .select('votes_count')
+          .eq('id', optionId)
+          .single();
         
-        if (updateError) console.error('Error updating vote count:', updateError);
+        if (currentOption) {
+          await supabase
+            .from('poll_options')
+            .update({ votes_count: currentOption.votes_count + 1 })
+            .eq('id', optionId);
+        }
       }
     },
     onSuccess: () => {
@@ -176,7 +182,7 @@ const FanPoll = () => {
 
   if (pollsLoading || optionsLoading) {
     return (
-      <Card>
+      <Card className="border-0 shadow-lg">
         <CardContent className="p-6">
           <div className="animate-pulse">
             <div className="h-6 bg-gray-200 rounded mb-4"></div>
@@ -190,7 +196,7 @@ const FanPoll = () => {
 
   if (!currentPoll) {
     return (
-      <Card>
+      <Card className="border-0 shadow-lg">
         <CardContent className="p-6 text-center">
           <Vote className="h-12 w-12 text-rhino-gray mx-auto mb-4" />
           <p className="text-rhino-gray">No active polls at the moment.</p>
@@ -202,24 +208,24 @@ const FanPoll = () => {
   const showResults = hasUserVoted || hasVoted || isExpired();
 
   return (
-    <Card className="overflow-hidden">
-      <CardHeader className="bg-rhino-blue text-white">
+    <Card className="border-0 shadow-lg overflow-hidden">
+      <CardHeader className="bg-gradient-to-r from-rhino-blue to-blue-600 text-white">
         <CardTitle className="flex items-center gap-2">
           <BarChart3 className="h-5 w-5" />
           Fan Poll
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-6">
-        <h3 className="text-lg font-semibold text-rhino-blue mb-2">
+      <CardContent className="p-6 bg-white">
+        <h3 className="text-xl font-bold text-rhino-blue mb-3">
           {currentPoll.title}
         </h3>
         
         {currentPoll.description && (
-          <p className="text-rhino-gray mb-4">{currentPoll.description}</p>
+          <p className="text-rhino-gray mb-4 leading-relaxed">{currentPoll.description}</p>
         )}
 
         {currentPoll.expires_at && (
-          <div className="flex items-center gap-2 text-sm text-rhino-gray mb-4">
+          <div className="flex items-center gap-2 text-sm text-rhino-gray mb-6 bg-gray-50 p-3 rounded-lg">
             <Clock className="h-4 w-4" />
             <span>
               {isExpired() 
@@ -230,32 +236,32 @@ const FanPoll = () => {
           </div>
         )}
 
-        <div className="space-y-3">
+        <div className="space-y-4">
           {pollOptions?.map((option) => (
             <div key={option.id} className="space-y-2">
               {showResults ? (
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-rhino-blue font-medium">{option.option_text}</span>
-                    <span className="text-sm text-rhino-gray">
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-rhino-blue font-semibold">{option.option_text}</span>
+                    <span className="text-sm text-rhino-gray font-medium">
                       {option.votes_count} votes ({getVotePercentage(option.votes_count)}%)
                     </span>
                   </div>
                   <Progress 
                     value={getVotePercentage(option.votes_count)} 
-                    className="h-2"
+                    className="h-3"
                   />
                 </div>
               ) : (
                 <button
                   onClick={() => handleOptionToggle(option.id)}
-                  className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                  className={`w-full text-left p-4 rounded-lg border-2 transition-all duration-200 ${
                     selectedOptions.includes(option.id)
-                      ? 'border-rhino-blue bg-rhino-blue/10 text-rhino-blue'
-                      : 'border-gray-200 hover:border-rhino-blue/50'
+                      ? 'border-rhino-blue bg-rhino-blue/10 text-rhino-blue shadow-md'
+                      : 'border-gray-200 hover:border-rhino-blue/50 hover:bg-gray-50'
                   }`}
                 >
-                  {option.option_text}
+                  <span className="font-medium">{option.option_text}</span>
                 </button>
               )}
             </div>
@@ -263,23 +269,25 @@ const FanPoll = () => {
         </div>
 
         {showResults ? (
-          <div className="mt-4 text-center text-sm text-rhino-gray">
-            Total votes: {getTotalVotes()}
+          <div className="mt-6 text-center p-4 bg-gray-50 rounded-lg">
+            <p className="text-rhino-gray font-medium">
+              Total votes: <span className="text-rhino-blue font-bold">{getTotalVotes()}</span>
+            </p>
           </div>
         ) : (
           <div className="mt-6 space-y-3">
             {currentPoll.multiple_choice && (
-              <p className="text-sm text-rhino-gray">
-                You can select multiple options
+              <p className="text-sm text-rhino-gray bg-blue-50 p-3 rounded-lg">
+                💡 You can select multiple options
               </p>
             )}
             <Button
               onClick={handleSubmitVote}
               disabled={voteMutation.isPending || selectedOptions.length === 0}
-              className="w-full bg-rhino-blue hover:bg-blue-700"
+              className="w-full bg-rhino-blue hover:bg-blue-700 text-white font-semibold py-3"
             >
               <Vote className="h-4 w-4 mr-2" />
-              Submit Vote
+              {voteMutation.isPending ? "Submitting..." : "Submit Vote"}
             </Button>
           </div>
         )}
