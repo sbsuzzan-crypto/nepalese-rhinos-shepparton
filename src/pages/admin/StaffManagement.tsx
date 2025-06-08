@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,21 +25,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
 import { Users, Plus, Edit, Trash2, Building } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import FileUpload from '@/components/admin/FileUpload';
+import CustomDeleteDialog from '@/components/admin/CustomDeleteDialog';
 import type { Tables } from '@/integrations/supabase/types';
 
 // Use the actual database schema type
@@ -47,6 +38,8 @@ type StaffMember = Tables<'staff'>;
 const StaffManagement = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [staffToDelete, setStaffToDelete] = useState<StaffMember | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     role: '',
@@ -88,9 +81,17 @@ const StaffManagement = () => {
       queryClient.invalidateQueries({ queryKey: ['staff'] });
       setIsDialogOpen(false);
       setEditingStaff(null);
+      resetForm();
       toast({
         title: 'Success',
         description: 'Staff member added successfully',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to add staff member',
+        variant: 'destructive',
       });
     },
   });
@@ -108,9 +109,17 @@ const StaffManagement = () => {
       queryClient.invalidateQueries({ queryKey: ['staff'] });
       setIsDialogOpen(false);
       setEditingStaff(null);
+      resetForm();
       toast({
         title: 'Success',
         description: 'Staff member updated successfully',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update staff member',
+        variant: 'destructive',
       });
     },
   });
@@ -126,9 +135,18 @@ const StaffManagement = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['staff'] });
+      setDeleteDialogOpen(false);
+      setStaffToDelete(null);
       toast({
         title: 'Success',
         description: 'Staff member deleted successfully',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to delete staff member',
+        variant: 'destructive',
       });
     },
   });
@@ -163,8 +181,15 @@ const StaffManagement = () => {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    deleteStaffMutation.mutate(id);
+  const handleDelete = (staff: StaffMember) => {
+    setStaffToDelete(staff);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (staffToDelete) {
+      deleteStaffMutation.mutate(staffToDelete.id);
+    }
   };
 
   const resetForm = () => {
@@ -178,6 +203,15 @@ const StaffManagement = () => {
     setEditingStaff(null);
     setIsDialogOpen(false);
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="inline-block w-8 h-8 border-4 border-rhino-red border-t-transparent rounded-full animate-spin"></div>
+        <p className="ml-3 text-gray-600">Loading staff...</p>
+      </div>
+    );
+  }
 
   const activeStaff = staff?.filter(s => s.is_active) || [];
   const inactiveStaff = staff?.filter(s => !s.is_active) || [];
@@ -304,9 +338,7 @@ const StaffManagement = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <div className="text-center py-8">Loading staff...</div>
-          ) : staff && staff.length > 0 ? (
+          {staff && staff.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
@@ -366,35 +398,14 @@ const StaffManagement = () => {
                         >
                           <Edit className="w-4 h-4" />
                         </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-red-600 hover:text-red-700"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete Staff Member</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Are you sure you want to delete {member.name}? 
-                                This action cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDelete(member.id)}
-                                className="bg-red-600 hover:bg-red-700"
-                              >
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDelete(member)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -410,6 +421,17 @@ const StaffManagement = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Custom Delete Dialog */}
+      <CustomDeleteDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={confirmDelete}
+        itemName={staffToDelete?.name || ''}
+        itemType="Staff Member"
+        isLoading={deleteStaffMutation.isPending}
+        description={`Are you sure you want to delete ${staffToDelete?.name}? This action cannot be undone.`}
+      />
     </div>
   );
 };

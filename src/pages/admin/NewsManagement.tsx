@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -25,22 +26,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import { Newspaper, Plus, Edit, Trash2, Eye, Calendar, User } from 'lucide-react';
+import { Newspaper, Plus, Edit, Trash2, Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import FileUpload from '@/components/admin/FileUpload';
 import RichTextEditor from '@/components/admin/RichTextEditor';
+import CustomDeleteDialog from '@/components/admin/CustomDeleteDialog';
 import type { Tables } from '@/integrations/supabase/types';
 
 type NewsArticle = Tables<'news'>;
@@ -48,6 +39,8 @@ type NewsArticle = Tables<'news'>;
 const NewsManagement = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingNews, setEditingNews] = useState<NewsArticle | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [articleToDelete, setArticleToDelete] = useState<NewsArticle | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -93,9 +86,17 @@ const NewsManagement = () => {
       queryClient.invalidateQueries({ queryKey: ['news'] });
       setIsDialogOpen(false);
       setEditingNews(null);
+      resetForm();
       toast({
         title: 'Success',
         description: 'News article added successfully',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to add news article',
+        variant: 'destructive',
       });
     },
   });
@@ -120,9 +121,17 @@ const NewsManagement = () => {
       queryClient.invalidateQueries({ queryKey: ['news'] });
       setIsDialogOpen(false);
       setEditingNews(null);
+      resetForm();
       toast({
         title: 'Success',
         description: 'News article updated successfully',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update news article',
+        variant: 'destructive',
       });
     },
   });
@@ -138,9 +147,18 @@ const NewsManagement = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['news'] });
+      setDeleteDialogOpen(false);
+      setArticleToDelete(null);
       toast({
         title: 'Success',
         description: 'News article deleted successfully',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to delete news article',
+        variant: 'destructive',
       });
     },
   });
@@ -175,8 +193,15 @@ const NewsManagement = () => {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    deleteNewsMutation.mutate(id);
+  const handleDelete = (article: NewsArticle) => {
+    setArticleToDelete(article);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (articleToDelete) {
+      deleteNewsMutation.mutate(articleToDelete.id);
+    }
   };
 
   const resetForm = () => {
@@ -190,6 +215,15 @@ const NewsManagement = () => {
     setEditingNews(null);
     setIsDialogOpen(false);
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="inline-block w-8 h-8 border-4 border-rhino-red border-t-transparent rounded-full animate-spin"></div>
+        <p className="ml-3 text-gray-600">Loading news...</p>
+      </div>
+    );
+  }
 
   const publishedNews = news?.filter(n => n.is_published) || [];
   const draftNews = news?.filter(n => !n.is_published) || [];
@@ -324,9 +358,7 @@ const NewsManagement = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <div className="text-center py-8">Loading news...</div>
-          ) : news && news.length > 0 ? (
+          {news && news.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
@@ -389,35 +421,14 @@ const NewsManagement = () => {
                         >
                           <Edit className="w-4 h-4" />
                         </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-red-600 hover:text-red-700"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete News Article</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Are you sure you want to delete "{article.title}"? 
-                                This action cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDelete(article.id)}
-                                className="bg-red-600 hover:bg-red-700"
-                              >
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDelete(article)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -433,6 +444,17 @@ const NewsManagement = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Custom Delete Dialog */}
+      <CustomDeleteDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={confirmDelete}
+        itemName={articleToDelete?.title || ''}
+        itemType="News Article"
+        isLoading={deleteNewsMutation.isPending}
+        description={`Are you sure you want to delete "${articleToDelete?.title}"? This action cannot be undone.`}
+      />
     </div>
   );
 };
