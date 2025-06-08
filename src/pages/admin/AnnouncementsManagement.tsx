@@ -32,34 +32,39 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 import { Switch } from '@/components/ui/switch';
 import { Megaphone, Plus, Edit, Trash2, Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import CustomDeleteDialog from '@/components/admin/CustomDeleteDialog';
+import SearchInput from '@/components/admin/SearchInput';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Announcement = Tables<'announcements'>;
 type AnnouncementCategory = 'news' | 'match_result' | 'player_update' | 'club_event' | 'general';
 
+const ITEMS_PER_PAGE = 10;
+
 const AnnouncementsManagement = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [announcementToDelete, setAnnouncementToDelete] = useState<Announcement | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<AnnouncementCategory>('general');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: announcements, isLoading } = useQuery({
+  const { data: allAnnouncements, isLoading } = useQuery({
     queryKey: ['announcements'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -71,6 +76,25 @@ const AnnouncementsManagement = () => {
       return data;
     },
   });
+
+  // Filter announcements based on search term
+  const filteredAnnouncements = allAnnouncements?.filter(announcement =>
+    announcement.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    announcement.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    announcement.excerpt?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    announcement.category?.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredAnnouncements.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedAnnouncements = filteredAnnouncements.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+  // Reset to first page when search changes
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  };
 
   const addAnnouncementMutation = useMutation({
     mutationFn: async (announcementData: {
@@ -135,6 +159,8 @@ const AnnouncementsManagement = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['announcements'] });
+      setDeleteDialogOpen(false);
+      setAnnouncementToDelete(null);
       toast({
         title: 'Success',
         description: 'Announcement deleted successfully',
@@ -168,12 +194,19 @@ const AnnouncementsManagement = () => {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    deleteAnnouncementMutation.mutate(id);
+  const handleDelete = (announcement: Announcement) => {
+    setAnnouncementToDelete(announcement);
+    setDeleteDialogOpen(true);
   };
 
-  const publishedAnnouncements = announcements?.filter(a => a.is_published) || [];
-  const draftAnnouncements = announcements?.filter(a => !a.is_published) || [];
+  const confirmDelete = () => {
+    if (announcementToDelete) {
+      deleteAnnouncementMutation.mutate(announcementToDelete.id);
+    }
+  };
+
+  const publishedAnnouncements = allAnnouncements?.filter(a => a.is_published) || [];
+  const draftAnnouncements = allAnnouncements?.filter(a => !a.is_published) || [];
 
   return (
     <div className="space-y-6">
@@ -308,9 +341,22 @@ const AnnouncementsManagement = () => {
             <CardTitle className="text-sm font-medium text-slate-600">Total</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-blue-600">{announcements?.length || 0}</div>
+            <div className="text-3xl font-bold text-blue-600">{allAnnouncements?.length || 0}</div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Search and Results Info */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <SearchInput
+          value={searchTerm}
+          onChange={handleSearchChange}
+          placeholder="Search announcements..."
+          className="w-full sm:w-80"
+        />
+        <div className="text-sm text-slate-600">
+          Showing {paginatedAnnouncements.length} of {filteredAnnouncements.length} announcements
+        </div>
       </div>
 
       <Card>
@@ -325,98 +371,129 @@ const AnnouncementsManagement = () => {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="text-center py-8">Loading announcements...</div>
-          ) : announcements && announcements.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {announcements.map((announcement) => (
-                  <TableRow key={announcement.id}>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium text-slate-900">{announcement.title}</p>
-                        {announcement.excerpt && (
-                          <p className="text-sm text-slate-500 truncate max-w-xs">{announcement.excerpt}</p>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{announcement.category}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={announcement.is_published ? 'default' : 'secondary'}>
-                        {announcement.is_published ? 'Published' : 'Draft'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-slate-400" />
-                        <span className="text-sm text-slate-600">
-                          {announcement.created_at ? format(new Date(announcement.created_at), 'MMM dd, yyyy') : 'N/A'}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEdit(announcement)}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-red-600 hover:text-red-700"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete Announcement</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Are you sure you want to delete "{announcement.title}"? 
-                                This action cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDelete(announcement.id)}
-                                className="bg-red-600 hover:bg-red-700"
-                              >
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </TableCell>
+            <div className="text-center py-8">
+              <div className="inline-block w-8 h-8 border-4 border-rhino-red border-t-transparent rounded-full animate-spin"></div>
+              <p className="mt-2 text-gray-600">Loading announcements...</p>
+            </div>
+          ) : paginatedAnnouncements && paginatedAnnouncements.length > 0 ? (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="min-w-[200px]">Title</TableHead>
+                    <TableHead className="hidden sm:table-cell">Category</TableHead>
+                    <TableHead className="hidden md:table-cell">Status</TableHead>
+                    <TableHead className="hidden lg:table-cell">Created</TableHead>
+                    <TableHead className="w-[100px]">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {paginatedAnnouncements.map((announcement) => (
+                    <TableRow key={announcement.id}>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium text-slate-900">{announcement.title}</p>
+                          {announcement.excerpt && (
+                            <p className="text-sm text-slate-500 line-clamp-2 mt-1">{announcement.excerpt}</p>
+                          )}
+                          {/* Show category on mobile */}
+                          <div className="sm:hidden mt-1">
+                            <Badge variant="outline" className="text-xs">{announcement.category}</Badge>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell">
+                        <Badge variant="outline">{announcement.category}</Badge>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <Badge variant={announcement.is_published ? 'default' : 'secondary'}>
+                          {announcement.is_published ? 'Published' : 'Draft'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-4 h-4 text-slate-400" />
+                          <span className="text-sm text-slate-600">
+                            {announcement.created_at ? format(new Date(announcement.created_at), 'MMM dd, yyyy') : 'N/A'}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEdit(announcement)}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-red-600 hover:text-red-700"
+                            onClick={() => handleDelete(announcement)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           ) : (
             <div className="text-center py-12">
               <Megaphone className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-slate-900 mb-2">No announcements</h3>
-              <p className="text-slate-600">Create your first announcement to get started.</p>
+              <h3 className="text-lg font-medium text-slate-900 mb-2">No announcements found</h3>
+              <p className="text-slate-600">
+                {searchTerm ? 'No announcements match your search criteria.' : 'Create your first announcement to get started.'}
+              </p>
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious 
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              />
+            </PaginationItem>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <PaginationItem key={page}>
+                <PaginationLink
+                  onClick={() => setCurrentPage(page)}
+                  isActive={currentPage === page}
+                  className="cursor-pointer"
+                >
+                  {page}
+                </PaginationLink>
+              </PaginationItem>
+            ))}
+            <PaginationItem>
+              <PaginationNext 
+                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      )}
+
+      <CustomDeleteDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={confirmDelete}
+        itemName={announcementToDelete?.title || ''}
+        itemType="Announcement"
+        isLoading={deleteAnnouncementMutation.isPending}
+        description={`Are you sure you want to delete "${announcementToDelete?.title}"? This will remove the announcement from the system and cannot be undone.`}
+      />
     </div>
   );
 };

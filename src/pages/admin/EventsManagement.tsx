@@ -25,32 +25,37 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 import { Switch } from '@/components/ui/switch';
 import { Calendar, Plus, Edit, Trash2, MapPin, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import CustomDeleteDialog from '@/components/admin/CustomDeleteDialog';
+import SearchInput from '@/components/admin/SearchInput';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Event = Tables<'events'>;
 
+const ITEMS_PER_PAGE = 10;
+
 const EventsManagement = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: events, isLoading } = useQuery({
+  const { data: allEvents, isLoading } = useQuery({
     queryKey: ['events'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -62,6 +67,25 @@ const EventsManagement = () => {
       return data;
     },
   });
+
+  // Filter events based on search term
+  const filteredEvents = allEvents?.filter(event =>
+    event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    event.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    event.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    event.event_type?.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredEvents.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedEvents = filteredEvents.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+  // Reset to first page when search changes
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  };
 
   const addEventMutation = useMutation({
     mutationFn: async (eventData: {
@@ -120,6 +144,8 @@ const EventsManagement = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
+      setDeleteDialogOpen(false);
+      setEventToDelete(null);
       toast({
         title: 'Success',
         description: 'Event deleted successfully',
@@ -152,12 +178,19 @@ const EventsManagement = () => {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    deleteEventMutation.mutate(id);
+  const handleDelete = (event: Event) => {
+    setEventToDelete(event);
+    setDeleteDialogOpen(true);
   };
 
-  const upcomingEvents = events?.filter(e => new Date(e.event_date) > new Date()) || [];
-  const pastEvents = events?.filter(e => new Date(e.event_date) <= new Date()) || [];
+  const confirmDelete = () => {
+    if (eventToDelete) {
+      deleteEventMutation.mutate(eventToDelete.id);
+    }
+  };
+
+  const upcomingEvents = allEvents?.filter(e => new Date(e.event_date) > new Date()) || [];
+  const pastEvents = allEvents?.filter(e => new Date(e.event_date) <= new Date()) || [];
 
   return (
     <div className="space-y-6">
@@ -289,9 +322,22 @@ const EventsManagement = () => {
             <CardTitle className="text-sm font-medium text-slate-600">Total Events</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-green-600">{events?.length || 0}</div>
+            <div className="text-3xl font-bold text-green-600">{allEvents?.length || 0}</div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Search and Results Info */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <SearchInput
+          value={searchTerm}
+          onChange={handleSearchChange}
+          placeholder="Search events..."
+          className="w-full sm:w-80"
+        />
+        <div className="text-sm text-slate-600">
+          Showing {paginatedEvents.length} of {filteredEvents.length} events
+        </div>
       </div>
 
       <Card>
@@ -306,114 +352,148 @@ const EventsManagement = () => {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="text-center py-8">Loading events...</div>
-          ) : events && events.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Event</TableHead>
-                  <TableHead>Date & Time</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {events.map((event) => (
-                  <TableRow key={event.id}>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium text-slate-900">{event.title}</p>
-                        {event.description && (
-                          <p className="text-sm text-slate-500 truncate max-w-xs">{event.description}</p>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-slate-400" />
-                        <span className="text-sm text-slate-600">
-                          {format(new Date(event.event_date), 'MMM dd, yyyy HH:mm')}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {event.location ? (
-                        <div className="flex items-center gap-2">
-                          <MapPin className="w-4 h-4 text-slate-400" />
-                          <span className="text-sm text-slate-600">{event.location}</span>
-                        </div>
-                      ) : (
-                        <span className="text-sm text-slate-400">No location</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{event.event_type}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        <Badge variant={new Date(event.event_date) > new Date() ? 'default' : 'secondary'}>
-                          {new Date(event.event_date) > new Date() ? 'Upcoming' : 'Past'}
-                        </Badge>
-                        {event.is_public && (
-                          <Badge variant="outline" className="text-xs">Public</Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEdit(event)}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-red-600 hover:text-red-700"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete Event</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Are you sure you want to delete "{event.title}"? 
-                                This action cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDelete(event.id)}
-                                className="bg-red-600 hover:bg-red-700"
-                              >
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </TableCell>
+            <div className="text-center py-8">
+              <div className="inline-block w-8 h-8 border-4 border-rhino-red border-t-transparent rounded-full animate-spin"></div>
+              <p className="mt-2 text-gray-600">Loading events...</p>
+            </div>
+          ) : paginatedEvents && paginatedEvents.length > 0 ? (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="min-w-[200px]">Event</TableHead>
+                    <TableHead className="hidden sm:table-cell">Date & Time</TableHead>
+                    <TableHead className="hidden md:table-cell">Location</TableHead>
+                    <TableHead className="hidden lg:table-cell">Type</TableHead>
+                    <TableHead className="hidden xl:table-cell">Status</TableHead>
+                    <TableHead className="w-[100px]">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {paginatedEvents.map((event) => (
+                    <TableRow key={event.id}>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium text-slate-900">{event.title}</p>
+                          {event.description && (
+                            <p className="text-sm text-slate-500 line-clamp-2 mt-1">{event.description}</p>
+                          )}
+                          {/* Show date on mobile */}
+                          <div className="sm:hidden mt-1 flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-slate-400" />
+                            <span className="text-xs text-slate-600">
+                              {format(new Date(event.event_date), 'MMM dd, yyyy HH:mm')}
+                            </span>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell">
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-slate-400" />
+                          <span className="text-sm text-slate-600">
+                            {format(new Date(event.event_date), 'MMM dd, yyyy HH:mm')}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {event.location ? (
+                          <div className="flex items-center gap-2">
+                            <MapPin className="w-4 h-4 text-slate-400" />
+                            <span className="text-sm text-slate-600">{event.location}</span>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-slate-400">No location</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        <Badge variant="outline">{event.event_type}</Badge>
+                      </TableCell>
+                      <TableCell className="hidden xl:table-cell">
+                        <div className="space-y-1">
+                          <Badge variant={new Date(event.event_date) > new Date() ? 'default' : 'secondary'}>
+                            {new Date(event.event_date) > new Date() ? 'Upcoming' : 'Past'}
+                          </Badge>
+                          {event.is_public && (
+                            <Badge variant="outline" className="text-xs">Public</Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEdit(event)}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-red-600 hover:text-red-700"
+                            onClick={() => handleDelete(event)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           ) : (
             <div className="text-center py-12">
               <Calendar className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-slate-900 mb-2">No events</h3>
-              <p className="text-slate-600">Create your first event to get started.</p>
+              <h3 className="text-lg font-medium text-slate-900 mb-2">No events found</h3>
+              <p className="text-slate-600">
+                {searchTerm ? 'No events match your search criteria.' : 'Create your first event to get started.'}
+              </p>
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious 
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              />
+            </PaginationItem>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <PaginationItem key={page}>
+                <PaginationLink
+                  onClick={() => setCurrentPage(page)}
+                  isActive={currentPage === page}
+                  className="cursor-pointer"
+                >
+                  {page}
+                </PaginationLink>
+              </PaginationItem>
+            ))}
+            <PaginationItem>
+              <PaginationNext 
+                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      )}
+
+      <CustomDeleteDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={confirmDelete}
+        itemName={eventToDelete?.title || ''}
+        itemType="Event"
+        isLoading={deleteEventMutation.isPending}
+        description={`Are you sure you want to delete "${eventToDelete?.title}"? This will remove the event from the system and cannot be undone.`}
+      />
     </div>
   );
 };
