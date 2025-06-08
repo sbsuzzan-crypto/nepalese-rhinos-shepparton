@@ -83,7 +83,7 @@ const GalleryManagement = () => {
       console.error('Error fetching gallery items:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch gallery items",
+        description: error.message || "Failed to fetch gallery items",
         variant: "destructive",
       });
     } finally {
@@ -203,7 +203,7 @@ const GalleryManagement = () => {
       console.error('Error deleting gallery item:', error);
       toast({
         title: "Error",
-        description: "Failed to delete gallery item",
+        description: error.message || "Failed to delete gallery item",
         variant: "destructive",
       });
     } finally {
@@ -308,7 +308,7 @@ const GalleryManagement = () => {
         </>
       )}
 
-      {/* Custom Delete Confirmation Dialog */}
+      {/* Custom Delete Dialog */}
       <CustomDeleteDialog
         isOpen={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}

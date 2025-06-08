@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -26,12 +25,11 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
-import { UserPlus, Eye, Mail, Phone, Calendar, CheckCircle, XCircle, Trash2 } from 'lucide-react';
+import { UserPlus, Eye, Mail, Phone, Calendar, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
-import DeleteConfirmationDialog from '@/components/admin/DeleteConfirmationDialog';
+import CustomDeleteDialog from '@/components/admin/CustomDeleteDialog';
 import type { Tables } from '@/integrations/supabase/types';
 
 type JoinSubmission = Tables<'join_submissions'>;
@@ -73,6 +71,13 @@ const JoinSubmissionsManagement = () => {
         description: 'Status updated successfully',
       });
     },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update status',
+        variant: 'destructive',
+      });
+    },
   });
 
   const deleteSubmissionMutation = useMutation({
@@ -92,6 +97,13 @@ const JoinSubmissionsManagement = () => {
       });
       setDeleteDialogOpen(false);
       setSubmissionToDelete(null);
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to delete application',
+        variant: 'destructive',
+      });
     },
   });
 
@@ -127,6 +139,15 @@ const JoinSubmissionsManagement = () => {
         return 'bg-gray-100 text-gray-800';
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="inline-block w-8 h-8 border-4 border-rhino-red border-t-transparent rounded-full animate-spin"></div>
+        <p className="ml-3 text-gray-600">Loading submissions...</p>
+      </div>
+    );
+  }
 
   const pendingSubmissions = submissions?.filter(s => s.status === 'pending') || [];
   const approvedSubmissions = submissions?.filter(s => s.status === 'approved') || [];
@@ -188,9 +209,7 @@ const JoinSubmissionsManagement = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <div className="text-center py-8">Loading submissions...</div>
-          ) : submissions && submissions.length > 0 ? (
+          {submissions && submissions.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
@@ -336,15 +355,15 @@ const JoinSubmissionsManagement = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
-      <DeleteConfirmationDialog
+      {/* Custom Delete Dialog */}
+      <CustomDeleteDialog
         isOpen={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
         onConfirm={confirmDelete}
-        itemName={`application from ${submissionToDelete?.name || 'unknown'}`}
+        itemName={submissionToDelete?.name || ''}
         itemType="Membership Application"
         isLoading={deleteSubmissionMutation.isPending}
-        customMessage={`Are you sure you want to delete the membership application from ${submissionToDelete?.name}? This action cannot be undone.`}
+        description={`Are you sure you want to delete the membership application from ${submissionToDelete?.name}? This action cannot be undone.`}
       />
     </div>
   );
