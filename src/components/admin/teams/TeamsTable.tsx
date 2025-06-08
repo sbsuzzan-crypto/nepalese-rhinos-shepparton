@@ -63,8 +63,8 @@ export const TeamsTable = ({ teams, isLoading, onEdit, onDelete }: TeamsTablePro
         <CardContent>
           <div className="text-center py-12">
             <Users className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-slate-900 mb-2">No teams</h3>
-            <p className="text-slate-600">Create your first team to get started.</p>
+            <h3 className="text-lg font-medium text-slate-900 mb-2">No teams found</h3>
+            <p className="text-slate-600">No teams match your search criteria.</p>
           </div>
         </CardContent>
       </Card>
@@ -82,78 +82,86 @@ export const TeamsTable = ({ teams, isLoading, onEdit, onDelete }: TeamsTablePro
           Manage all club teams and squads
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Team Name</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Players</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {teams.map((team) => (
-              <TableRow key={team.id}>
-                <TableCell>
-                  <div>
-                    <p className="font-medium text-slate-900">{team.name}</p>
-                    {team.description && (
-                      <p className="text-sm text-slate-500 truncate max-w-xs">{team.description}</p>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  {team.category && (
-                    <Badge variant="outline">{team.category}</Badge>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-slate-400" />
-                    <span className="text-sm font-medium">
-                      {team.players?.[0]?.count || 0} players
-                    </span>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge variant={team.is_active ? 'default' : 'secondary'}>
-                    {team.is_active ? 'Active' : 'Inactive'}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-slate-400" />
-                    <span className="text-sm text-slate-600">
-                      {team.created_at ? format(new Date(team.created_at), 'MMM dd, yyyy') : 'N/A'}
-                    </span>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onEdit(team)}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-red-600 hover:text-red-700"
-                      onClick={() => onDelete(team)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </TableCell>
+      <CardContent className="p-0">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="min-w-[200px]">Team Name</TableHead>
+                <TableHead className="hidden sm:table-cell">Category</TableHead>
+                <TableHead className="hidden md:table-cell">Players</TableHead>
+                <TableHead className="hidden lg:table-cell">Status</TableHead>
+                <TableHead className="hidden xl:table-cell">Created</TableHead>
+                <TableHead className="w-[100px]">Actions</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {teams.map((team) => (
+                <TableRow key={team.id}>
+                  <TableCell>
+                    <div>
+                      <p className="font-medium text-slate-900">{team.name}</p>
+                      {team.description && (
+                        <p className="text-sm text-slate-500 line-clamp-2 mt-1">{team.description}</p>
+                      )}
+                      {/* Show category on mobile */}
+                      <div className="sm:hidden mt-1">
+                        {team.category && (
+                          <Badge variant="outline" className="text-xs">{team.category}</Badge>
+                        )}
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell className="hidden sm:table-cell">
+                    {team.category && (
+                      <Badge variant="outline">{team.category}</Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    <div className="flex items-center gap-2">
+                      <Users className="w-4 h-4 text-slate-400" />
+                      <span className="text-sm font-medium">
+                        {team.players?.[0]?.count || 0} players
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="hidden lg:table-cell">
+                    <Badge variant={team.is_active ? 'default' : 'secondary'}>
+                      {team.is_active ? 'Active' : 'Inactive'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="hidden xl:table-cell">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-slate-400" />
+                      <span className="text-sm text-slate-600">
+                        {team.created_at ? format(new Date(team.created_at), 'MMM dd, yyyy') : 'N/A'}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onEdit(team)}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-red-600 hover:text-red-700"
+                        onClick={() => onDelete(team)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </CardContent>
     </Card>
   );

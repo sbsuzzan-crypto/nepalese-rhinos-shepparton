@@ -9,19 +9,32 @@ import { useToast } from '@/hooks/use-toast';
 import SponsorForm from '@/components/admin/sponsors/SponsorForm';
 import SponsorCard from '@/components/admin/sponsors/SponsorCard';
 import CustomDeleteDialog from '@/components/admin/CustomDeleteDialog';
+import SearchInput from '@/components/admin/SearchInput';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 import type { Database } from '@/integrations/supabase/types';
 
 type Sponsor = Database['public']['Tables']['sponsors']['Row'];
+
+const ITEMS_PER_PAGE = 12;
 
 const SponsorsManagement = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingSponsor, setEditingSponsor] = useState<Sponsor | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [sponsorToDelete, setSponsorToDelete] = useState<Sponsor | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: sponsors, isLoading } = useQuery({
+  const { data: allSponsors, isLoading } = useQuery({
     queryKey: ['admin-sponsors'],
     queryFn: async () => {
       console.log('Fetching sponsors...');
@@ -37,9 +50,27 @@ const SponsorsManagement = () => {
       console.log('Sponsors fetched:', data);
       return data as Sponsor[];
     },
-    refetchInterval: 30000, // Refetch every 30 seconds
-    staleTime: 10000, // Consider data stale after 10 seconds
+    refetchInterval: 30000,
+    staleTime: 10000,
   });
+
+  // Filter sponsors based on search term
+  const filteredSponsors = allSponsors?.filter(sponsor =>
+    sponsor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    sponsor.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    sponsor.tier?.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredSponsors.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedSponsors = filteredSponsors.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+  // Reset to first page when search changes
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  };
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -56,7 +87,6 @@ const SponsorsManagement = () => {
       console.log('Sponsor deleted successfully');
     },
     onSuccess: () => {
-      // Invalidate and refetch immediately
       queryClient.invalidateQueries({ queryKey: ['admin-sponsors'] });
       queryClient.refetchQueries({ queryKey: ['admin-sponsors'] });
       
@@ -99,7 +129,6 @@ const SponsorsManagement = () => {
   };
 
   const handleFormSuccess = () => {
-    // Invalidate and refetch immediately
     queryClient.invalidateQueries({ queryKey: ['admin-sponsors'] });
     queryClient.refetchQueries({ queryKey: ['admin-sponsors'] });
     handleFormClose();
@@ -107,7 +136,7 @@ const SponsorsManagement = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Sponsors Management</h1>
           <p className="text-gray-600">Manage club sponsors and partners</p>
@@ -125,7 +154,7 @@ const SponsorsManagement = () => {
             <CardTitle className="text-sm font-medium text-gray-700">Total Sponsors</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{sponsors?.length || 0}</div>
+            <div className="text-2xl font-bold text-blue-600">{allSponsors?.length || 0}</div>
           </CardContent>
         </Card>
         <Card className="border-l-4 border-l-green-500">
@@ -134,7 +163,7 @@ const SponsorsManagement = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {sponsors?.filter(s => s.is_active).length || 0}
+              {allSponsors?.filter(s => s.is_active).length || 0}
             </div>
           </CardContent>
         </Card>
@@ -144,7 +173,7 @@ const SponsorsManagement = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-amber-600">
-              {sponsors?.filter(s => s.tier === 'gold').length || 0}
+              {allSponsors?.filter(s => s.tier === 'gold').length || 0}
             </div>
           </CardContent>
         </Card>
@@ -154,10 +183,23 @@ const SponsorsManagement = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-gray-500">
-              {sponsors?.filter(s => s.tier === 'silver').length || 0}
+              {allSponsors?.filter(s => s.tier === 'silver').length || 0}
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Search and Results Info */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <SearchInput
+          value={searchTerm}
+          onChange={handleSearchChange}
+          placeholder="Search sponsors..."
+          className="w-full sm:w-80"
+        />
+        <div className="text-sm text-gray-600">
+          Showing {paginatedSponsors.length} of {filteredSponsors.length} sponsors
+        </div>
       </div>
 
       {/* Sponsors Grid */}
@@ -166,9 +208,9 @@ const SponsorsManagement = () => {
           <div className="inline-block w-8 h-8 border-4 border-rhino-red border-t-transparent rounded-full animate-spin"></div>
           <p className="mt-2 text-gray-600">Loading sponsors...</p>
         </div>
-      ) : sponsors && sponsors.length > 0 ? (
+      ) : paginatedSponsors && paginatedSponsors.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {sponsors.map((sponsor) => (
+          {paginatedSponsors.map((sponsor) => (
             <SponsorCard
               key={sponsor.id}
               sponsor={sponsor}
@@ -180,14 +222,54 @@ const SponsorsManagement = () => {
       ) : (
         <Card>
           <CardContent className="text-center py-12">
-            <h3 className="text-lg font-semibold mb-2 text-gray-900">No sponsors yet</h3>
-            <p className="text-gray-600 mb-4">Start by adding your first sponsor</p>
-            <Button onClick={() => setIsFormOpen(true)} className="bg-rhino-red hover:bg-red-700">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Sponsor
-            </Button>
+            <h3 className="text-lg font-semibold mb-2 text-gray-900">
+              {searchTerm ? 'No sponsors found' : 'No sponsors yet'}
+            </h3>
+            <p className="text-gray-600 mb-4">
+              {searchTerm 
+                ? 'Try adjusting your search terms' 
+                : 'Start by adding your first sponsor'
+              }
+            </p>
+            {!searchTerm && (
+              <Button onClick={() => setIsFormOpen(true)} className="bg-rhino-red hover:bg-red-700">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Sponsor
+              </Button>
+            )}
           </CardContent>
         </Card>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious 
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              />
+            </PaginationItem>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <PaginationItem key={page}>
+                <PaginationLink
+                  onClick={() => setCurrentPage(page)}
+                  isActive={currentPage === page}
+                  className="cursor-pointer"
+                >
+                  {page}
+                </PaginationLink>
+              </PaginationItem>
+            ))}
+            <PaginationItem>
+              <PaginationNext 
+                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
       )}
 
       {/* Form Modal */}
