@@ -13,26 +13,17 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/table';
-import { 
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Heart, Eye, Calendar, CheckCircle, X, MessageSquare, Trash2 } from 'lucide-react';
+import { MessageSquare, Eye, EyeOff, Trash2, Check, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
-import DeleteConfirmationDialog from '@/components/admin/DeleteConfirmationDialog';
+import CustomDeleteDialog from '@/components/admin/CustomDeleteDialog';
 import type { Tables } from '@/integrations/supabase/types';
 
-type SupportersMessage = Tables<'supporters_messages'>;
+type SupporterMessage = Tables<'supporters_messages'>;
 
 const SupportersMessagesManagement = () => {
-  const [selectedMessage, setSelectedMessage] = useState<SupportersMessage | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [messageToDelete, setMessageToDelete] = useState<SupportersMessage | null>(null);
+  const [messageToDelete, setMessageToDelete] = useState<SupporterMessage | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -49,11 +40,11 @@ const SupportersMessagesManagement = () => {
     },
   });
 
-  const approveMessageMutation = useMutation({
-    mutationFn: async (id: string) => {
+  const updateMessageMutation = useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<SupporterMessage> }) => {
       const { error } = await supabase
         .from('supporters_messages')
-        .update({ is_approved: true })
+        .update(updates)
         .eq('id', id);
 
       if (error) throw error;
@@ -62,25 +53,14 @@ const SupportersMessagesManagement = () => {
       queryClient.invalidateQueries({ queryKey: ['supporters_messages'] });
       toast({
         title: 'Success',
-        description: 'Message approved successfully',
+        description: 'Message updated successfully',
       });
     },
-  });
-
-  const publishMessageMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('supporters_messages')
-        .update({ is_published: true })
-        .eq('id', id);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['supporters_messages'] });
+    onError: (error: any) => {
       toast({
-        title: 'Success',
-        description: 'Message published successfully',
+        title: 'Error',
+        description: error.message || 'Failed to update message',
+        variant: 'destructive',
       });
     },
   });
@@ -96,21 +76,44 @@ const SupportersMessagesManagement = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['supporters_messages'] });
+      setDeleteDialogOpen(false);
+      setMessageToDelete(null);
       toast({
         title: 'Success',
         description: 'Message deleted successfully',
       });
-      setDeleteDialogOpen(false);
-      setMessageToDelete(null);
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to delete message',
+        variant: 'destructive',
+      });
     },
   });
 
-  const handleViewDetails = (message: SupportersMessage) => {
-    setSelectedMessage(message);
-    setIsDialogOpen(true);
+  const handleApprove = (message: SupporterMessage) => {
+    updateMessageMutation.mutate({
+      id: message.id,
+      updates: { is_approved: true }
+    });
   };
 
-  const handleDelete = (message: SupportersMessage) => {
+  const handleReject = (message: SupporterMessage) => {
+    updateMessageMutation.mutate({
+      id: message.id,
+      updates: { is_approved: false }
+    });
+  };
+
+  const handlePublish = (message: SupporterMessage) => {
+    updateMessageMutation.mutate({
+      id: message.id,
+      updates: { is_published: !message.is_published }
+    });
+  };
+
+  const handleDelete = (message: SupporterMessage) => {
     setMessageToDelete(message);
     setDeleteDialogOpen(true);
   };
@@ -121,8 +124,17 @@ const SupportersMessagesManagement = () => {
     }
   };
 
-  const pendingMessages = messages?.filter(m => !m.is_approved) || [];
-  const approvedMessages = messages?.filter(m => m.is_approved && !m.is_published) || [];
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="inline-block w-8 h-8 border-4 border-rhino-red border-t-transparent rounded-full animate-spin"></div>
+        <p className="ml-3 text-gray-600">Loading messages...</p>
+      </div>
+    );
+  }
+
+  const approvedMessages = messages?.filter(m => m.is_approved) || [];
+  const pendingMessages = messages?.filter(m => m.is_approved === null || m.is_approved === false) || [];
   const publishedMessages = messages?.filter(m => m.is_published) || [];
 
   return (
@@ -130,42 +142,42 @@ const SupportersMessagesManagement = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Supporters Messages</h1>
-          <p className="text-slate-600">Manage fan messages and testimonials</p>
+          <p className="text-slate-600">Manage messages from supporters and fans</p>
         </div>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card className="border-l-4 border-l-blue-500">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-slate-600">Total Messages</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-blue-600">{messages?.length || 0}</div>
+          </CardContent>
+        </Card>
         <Card className="border-l-4 border-l-yellow-500">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">Pending</CardTitle>
+            <CardTitle className="text-sm font-medium text-slate-600">Pending Approval</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-yellow-600">{pendingMessages.length}</div>
           </CardContent>
         </Card>
-        <Card className="border-l-4 border-l-blue-500">
+        <Card className="border-l-4 border-l-green-500">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-slate-600">Approved</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-blue-600">{approvedMessages.length}</div>
+            <div className="text-3xl font-bold text-green-600">{approvedMessages.length}</div>
           </CardContent>
         </Card>
-        <Card className="border-l-4 border-l-green-500">
+        <Card className="border-l-4 border-l-purple-500">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-slate-600">Published</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-green-600">{publishedMessages.length}</div>
-          </CardContent>
-        </Card>
-        <Card className="border-l-4 border-l-slate-500">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">Total</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-slate-600">{messages?.length || 0}</div>
+            <div className="text-3xl font-bold text-purple-600">{publishedMessages.length}</div>
           </CardContent>
         </Card>
       </div>
@@ -173,23 +185,20 @@ const SupportersMessagesManagement = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Heart className="w-5 h-5" />
-            Fan Messages
+            <MessageSquare className="w-5 h-5" />
+            All Messages
           </CardTitle>
           <CardDescription>
-            Review and manage messages from supporters
+            Review and manage supporters messages
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <div className="text-center py-8">Loading messages...</div>
-          ) : messages && messages.length > 0 ? (
+          {messages && messages.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Message Preview</TableHead>
+                  <TableHead>Message</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Received</TableHead>
                   <TableHead>Actions</TableHead>
@@ -199,63 +208,72 @@ const SupportersMessagesManagement = () => {
                 {messages.map((message) => (
                   <TableRow key={message.id}>
                     <TableCell>
-                      <div className="font-medium text-slate-900">{message.name}</div>
+                      <div>
+                        <p className="font-medium text-slate-900">{message.name}</p>
+                        {message.email && (
+                          <p className="text-sm text-slate-500">{message.email}</p>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
-                      <span className="text-sm text-slate-600">{message.email || 'N/A'}</span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm text-slate-600">
-                        {message.message.substring(0, 50)}...
-                      </span>
+                      <p className="text-sm text-slate-700 max-w-xs truncate">
+                        {message.message}
+                      </p>
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col gap-1">
-                        <Badge variant={message.is_approved ? "default" : "secondary"}>
-                          {message.is_approved ? 'Approved' : 'Pending'}
+                        <Badge 
+                          variant={
+                            message.is_approved === true ? 'default' : 
+                            message.is_approved === false ? 'destructive' : 'secondary'
+                          }
+                        >
+                          {message.is_approved === true ? 'Approved' : 
+                           message.is_approved === false ? 'Rejected' : 'Pending'}
                         </Badge>
                         {message.is_published && (
-                          <Badge variant="outline" className="bg-green-50 text-green-700">
+                          <Badge variant="outline" className="text-purple-600 border-purple-600">
                             Published
                           </Badge>
                         )}
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-slate-400" />
-                        <span className="text-sm text-slate-600">
-                          {message.created_at ? format(new Date(message.created_at), 'MMM dd, yyyy') : 'N/A'}
-                        </span>
-                      </div>
+                      <span className="text-sm text-slate-600">
+                        {message.created_at ? format(new Date(message.created_at), 'MMM dd, yyyy') : 'N/A'}
+                      </span>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleViewDetails(message)}
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        {!message.is_approved && (
+                        {message.is_approved !== true && (
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => approveMessageMutation.mutate(message.id)}
-                            className="text-green-600 hover:text-green-700"
+                            onClick={() => handleApprove(message)}
+                            disabled={updateMessageMutation.isPending}
                           >
-                            <CheckCircle className="w-4 h-4" />
+                            <Check className="w-4 h-4" />
                           </Button>
                         )}
-                        {message.is_approved && !message.is_published && (
+                        {message.is_approved !== false && (
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => publishMessageMutation.mutate(message.id)}
-                            className="text-blue-600 hover:text-blue-700"
+                            onClick={() => handleReject(message)}
+                            disabled={updateMessageMutation.isPending}
+                            className="text-red-600 hover:text-red-700"
                           >
-                            Publish
+                            <X className="w-4 h-4" />
+                          </Button>
+                        )}
+                        {message.is_approved && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handlePublish(message)}
+                            disabled={updateMessageMutation.isPending}
+                          >
+                            {message.is_published ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                           </Button>
                         )}
                         <Button
@@ -282,68 +300,15 @@ const SupportersMessagesManagement = () => {
         </CardContent>
       </Card>
 
-      {/* Details Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>Message Details</DialogTitle>
-            <DialogDescription>
-              Full details of the supporter message
-            </DialogDescription>
-          </DialogHeader>
-          {selectedMessage && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-slate-600">Name</label>
-                  <p className="text-slate-900">{selectedMessage.name}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-slate-600">Email</label>
-                  <p className="text-slate-900">{selectedMessage.email || 'Not provided'}</p>
-                </div>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-slate-600">Message</label>
-                <p className="text-slate-900 bg-slate-50 p-3 rounded-md whitespace-pre-wrap">
-                  {selectedMessage.message}
-                </p>
-              </div>
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-slate-600">Status</label>
-                  <div className="flex flex-col gap-1 mt-1">
-                    <Badge variant={selectedMessage.is_approved ? "default" : "secondary"}>
-                      {selectedMessage.is_approved ? 'Approved' : 'Pending'}
-                    </Badge>
-                    {selectedMessage.is_published && (
-                      <Badge variant="outline" className="bg-green-50 text-green-700">
-                        Published
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-slate-600">Received On</label>
-                  <p className="text-slate-900">
-                    {selectedMessage.created_at ? format(new Date(selectedMessage.created_at), 'MMMM dd, yyyy') : 'Unknown'}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirmation Dialog */}
-      <DeleteConfirmationDialog
+      {/* Custom Delete Dialog */}
+      <CustomDeleteDialog
         isOpen={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
         onConfirm={confirmDelete}
-        itemName={`message from ${messageToDelete?.name || 'unknown'}`}
+        itemName={messageToDelete?.name || ''}
         itemType="Supporter Message"
         isLoading={deleteMessageMutation.isPending}
-        customMessage={`Are you sure you want to delete the message from ${messageToDelete?.name}? This action cannot be undone.`}
+        description={`Are you sure you want to delete the message from "${messageToDelete?.name}"? This action cannot be undone.`}
       />
     </div>
   );
