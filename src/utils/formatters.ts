@@ -65,3 +65,17 @@ export const formatRelativeTime = (dateString: string): string => {
     return dateString;
   }
 };
+
+export const stripHtml = (html: string): string => {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  return tmp.textContent || tmp.innerText || '';
+};
+
+export const getReadingTime = (content: string): number => {
+  const wordsPerMinute = 200;
+  const text = stripHtml(content);
+  const wordCount = text.split(/\s+/).length;
+  const readingTime = Math.ceil(wordCount / wordsPerMinute);
+  return Math.max(1, readingTime);
+};

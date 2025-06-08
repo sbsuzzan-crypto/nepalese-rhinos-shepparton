@@ -5,7 +5,7 @@ export interface News {
   title: string;
   content: string;
   excerpt?: string;
-  featured_image?: string;
+  featured_image_url?: string;
   category?: string;
   author?: string;
   published_at: string;
@@ -16,17 +16,33 @@ export interface News {
   views?: number;
 }
 
+// Alias for NewsArticle to match component expectations
+export interface NewsArticle {
+  id: string;
+  title: string;
+  content: string;
+  excerpt?: string;
+  featured_image_url?: string;
+  created_at: string;
+  updated_at: string;
+  is_published?: boolean;
+  news_categories?: {
+    id: string;
+    name: string;
+    color: string;
+  };
+}
+
 export interface Fixture {
   id: string;
-  home_team: string;
-  away_team: string;
+  opponent: string;
   match_date: string;
-  match_time: string;
   venue: string;
-  competition?: string;
-  status: 'upcoming' | 'live' | 'completed';
+  is_home?: boolean;
+  status: 'upcoming' | 'live' | 'completed' | 'cancelled' | 'postponed';
   home_score?: number;
   away_score?: number;
+  match_report?: string;
   created_at: string;
   updated_at: string;
 }
@@ -73,6 +89,7 @@ export interface Category {
   id: string;
   name: string;
   slug: string;
+  color: string;
   created_at: string;
   updated_at: string;
 }

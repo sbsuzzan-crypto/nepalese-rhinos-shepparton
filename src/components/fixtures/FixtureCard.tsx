@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, MapPin, Trophy } from "lucide-react";
-import { formatDate, formatTime } from "@/utils/formatters";
+import { formatDate } from "@/utils/formatters";
 import type { Fixture } from "@/types";
 
 interface FixtureCardProps {
@@ -10,6 +10,9 @@ interface FixtureCardProps {
 }
 
 const FixtureCard = ({ fixture }: FixtureCardProps) => {
+  const homeTeam = fixture.is_home ? "Nepalese Rhinos FC" : fixture.opponent;
+  const awayTeam = fixture.is_home ? fixture.opponent : "Nepalese Rhinos FC";
+
   return (
     <Card className="bg-white shadow-xl border-0">
       <CardHeader className="bg-gradient-to-r from-rhino-blue to-rhino-navy text-white">
@@ -22,7 +25,7 @@ const FixtureCard = ({ fixture }: FixtureCardProps) => {
             <div className="w-20 h-20 bg-rhino-red rounded-full flex items-center justify-center mx-auto mb-4">
               <Trophy className="h-10 w-10 text-white" />
             </div>
-            <h3 className="text-xl font-bold text-rhino-blue mb-2">{fixture.home_team}</h3>
+            <h3 className="text-xl font-bold text-rhino-blue mb-2">{homeTeam}</h3>
             <Badge variant="secondary" className="text-sm">Home</Badge>
           </div>
 
@@ -33,9 +36,6 @@ const FixtureCard = ({ fixture }: FixtureCardProps) => {
               <div className="flex items-center justify-center gap-2 text-rhino-gray">
                 <Calendar className="h-4 w-4" />
                 <span>{formatDate(fixture.match_date)}</span>
-              </div>
-              <div className="text-lg font-semibold text-rhino-blue">
-                {formatTime(fixture.match_time)}
               </div>
               <div className="flex items-center justify-center gap-2 text-rhino-gray">
                 <MapPin className="h-4 w-4" />
@@ -49,7 +49,7 @@ const FixtureCard = ({ fixture }: FixtureCardProps) => {
             <div className="w-20 h-20 bg-slate-500 rounded-full flex items-center justify-center mx-auto mb-4">
               <Trophy className="h-10 w-10 text-white" />
             </div>
-            <h3 className="text-xl font-bold text-rhino-blue mb-2">{fixture.away_team}</h3>
+            <h3 className="text-xl font-bold text-rhino-blue mb-2">{awayTeam}</h3>
             <Badge variant="outline" className="text-sm">Away</Badge>
           </div>
         </div>
