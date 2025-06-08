@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,21 +8,36 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Shield, UserPlus, LogIn } from 'lucide-react';
+import { Loader2, Shield, UserPlus, LogIn, Eye, EyeOff } from 'lucide-react';
 
 const Auth = () => {
   const { user, signIn, signUp, loading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>('');
   const [success, setSuccess] = useState<string>('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [activeTab, setActiveTab] = useState('signin');
 
-  // Redirect authenticated users to admin dashboard
+  // Get the redirect path from location state
+  const from = location.state?.from?.pathname || '/admin';
+
+  // Redirect authenticated users
   useEffect(() => {
     if (user && !loading) {
-      navigate('/admin', { replace: true });
+      navigate(from, { replace: true });
     }
-  }, [user, loading, navigate]);
+  }, [user, loading, navigate, from]);
+
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validatePassword = (password: string) => {
+    return password.length >= 6;
+  };
 
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -33,13 +48,32 @@ const Auth = () => {
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
 
+    // Validation
+    if (!validateEmail(email)) {
+      setError('Please enter a valid email address');
+      setIsLoading(false);
+      return;
+    }
+
+    if (!validatePassword(password)) {
+      setError('Password must be at least 6 characters long');
+      setIsLoading(false);
+      return;
+    }
+
     const { error } = await signIn(email, password);
     
     if (error) {
-      setError(error.message);
+      if (error.message.includes('Invalid login credentials')) {
+        setError('Invalid email or password. Please check your credentials and try again.');
+      } else if (error.message.includes('Email not confirmed')) {
+        setError('Please check your email and click the confirmation link before signing in.');
+      } else {
+        setError(error.message);
+      }
     } else {
       // Success - user will be redirected by useEffect
-      navigate('/admin', { replace: true });
+      navigate(from, { replace: true });
     }
     
     setIsLoading(false);
@@ -54,14 +88,47 @@ const Auth = () => {
     const formData = new FormData(e.currentTarget);
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
+    const confirmPassword = formData.get('confirmPassword') as string;
     const fullName = formData.get('fullName') as string;
+
+    // Validation
+    if (!fullName.trim()) {
+      setError('Please enter your full name');
+      setIsLoading(false);
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      setError('Please enter a valid email address');
+      setIsLoading(false);
+      return;
+    }
+
+    if (!validatePassword(password)) {
+      setError('Password must be at least 6 characters long');
+      setIsLoading(false);
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      setIsLoading(false);
+      return;
+    }
 
     const { error } = await signUp(email, password, fullName);
     
     if (error) {
-      setError(error.message);
+      if (error.message.includes('User already registered')) {
+        setError('An account with this email already exists. Please sign in instead.');
+        setActiveTab('signin');
+      } else {
+        setError(error.message);
+      }
     } else {
       setSuccess('Account created successfully! Please check your email to verify your account. An admin will need to approve your access.');
+      // Clear the form
+      (e.target as HTMLFormElement).reset();
     }
     
     setIsLoading(false);
@@ -110,7 +177,7 @@ const Auth = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="signin" className="space-y-4">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
               <TabsList className="grid w-full grid-cols-2 bg-slate-100">
                 <TabsTrigger value="signin" className="flex items-center gap-2">
                   <LogIn className="w-4 h-4" />
@@ -137,13 +204,28 @@ const Auth = () => {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="signin-password" className="text-slate-700">Password</Label>
-                    <Input
-                      id="signin-password"
-                      name="password"
-                      type="password"
-                      required
-                      className="border-slate-200 focus:border-rhino-red focus:ring-rhino-red"
-                    />
+                    <div className="relative">
+                      <Input
+                        id="signin-password"
+                        name="password"
+                        type={showPassword ? "text" : "password"}
+                        required
+                        className="border-slate-200 focus:border-rhino-red focus:ring-rhino-red pr-10"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4 text-slate-400" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-slate-400" />
+                        )}
+                      </Button>
+                    </div>
                   </div>
                   <Button 
                     type="submit" 
@@ -197,6 +279,19 @@ const Auth = () => {
                       type="password"
                       required
                       minLength={6}
+                      placeholder="At least 6 characters"
+                      className="border-slate-200 focus:border-rhino-blue focus:ring-rhino-blue"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirm-password" className="text-slate-700">Confirm Password</Label>
+                    <Input
+                      id="confirm-password"
+                      name="confirmPassword"
+                      type="password"
+                      required
+                      minLength={6}
+                      placeholder="Confirm your password"
                       className="border-slate-200 focus:border-rhino-blue focus:ring-rhino-blue"
                     />
                   </div>
