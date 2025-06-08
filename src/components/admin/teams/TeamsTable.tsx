@@ -14,7 +14,9 @@ import { Users, Edit, Trash2, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import type { Tables } from '@/integrations/supabase/types';
 
-type Team = Tables<'teams'>;
+type Team = Tables<'teams'> & {
+  players?: { count: number }[];
+};
 
 interface TeamsTableProps {
   teams: Team[] | undefined;
@@ -86,6 +88,7 @@ export const TeamsTable = ({ teams, isLoading, onEdit, onDelete }: TeamsTablePro
             <TableRow>
               <TableHead>Team Name</TableHead>
               <TableHead>Category</TableHead>
+              <TableHead>Players</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Created</TableHead>
               <TableHead>Actions</TableHead>
@@ -106,6 +109,14 @@ export const TeamsTable = ({ teams, isLoading, onEdit, onDelete }: TeamsTablePro
                   {team.category && (
                     <Badge variant="outline">{team.category}</Badge>
                   )}
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4 text-slate-400" />
+                    <span className="text-sm font-medium">
+                      {team.players?.[0]?.count || 0} players
+                    </span>
+                  </div>
                 </TableCell>
                 <TableCell>
                   <Badge variant={team.is_active ? 'default' : 'secondary'}>

@@ -1,14 +1,9 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
 import { 
   Table, 
   TableBody, 
@@ -26,102 +21,109 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Newspaper, Plus, Edit, Trash2, Calendar } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Newspaper, Plus, Edit, Trash2, Eye, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
-import FileUpload from '@/components/admin/FileUpload';
 import RichTextEditor from '@/components/admin/RichTextEditor';
+import FileUpload from '@/components/admin/FileUpload';
 import CustomDeleteDialog from '@/components/admin/CustomDeleteDialog';
 import type { Tables } from '@/integrations/supabase/types';
 
-type NewsArticle = Tables<'news'>;
+type NewsArticle = Tables<'news'> & {
+  profiles?: {
+    full_name: string | null;
+    email: string;
+  } | null;
+};
 
 const NewsManagement = () => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingNews, setEditingNews] = useState<NewsArticle | null>(null);
+  const [editingArticle, setEditingArticle] = useState<NewsArticle | null>(null);
+  const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [articleToDelete, setArticleToDelete] = useState<NewsArticle | null>(null);
-  const [formData, setFormData] = useState({
-    title: '',
-    content: '',
-    excerpt: '',
-    featured_image_url: '',
-    is_published: false
-  });
+  const [content, setContent] = useState('');
+  const [featuredImage, setFeaturedImage] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: news, isLoading } = useQuery({
+  const { data: articles, isLoading } = useQuery({
     queryKey: ['news'],
     queryFn: async () => {
+      console.log('Fetching news articles with author information...');
       const { data, error } = await supabase
         .from('news')
-        .select('*')
+        .select(`
+          *,
+          profiles (
+            full_name,
+            email
+          )
+        `)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.error('Error fetching news:', error);
+        throw error;
+      }
+      
+      console.log('News articles fetched successfully:', data);
+      return data as NewsArticle[];
     },
   });
 
-  const addNewsMutation = useMutation({
-    mutationFn: async (newsData: {
-      title: string;
-      content: string;
-      excerpt?: string;
-      featured_image_url?: string;
-      is_published: boolean;
-      published_at?: string;
-    }) => {
-      const { error } = await supabase
+  const createArticleMutation = useMutation({
+    mutationFn: async (newArticle: Omit<NewsArticle, 'id' | 'created_at' | 'updated_at' | 'profiles'>) => {
+      const { data, error } = await supabase
         .from('news')
-        .insert([{
-          ...newsData,
-          published_at: newsData.is_published ? new Date().toISOString() : null
-        }]);
+        .insert([newArticle])
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating news article:', error);
+        throw error;
+      }
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['news'] });
-      setIsDialogOpen(false);
-      setEditingNews(null);
-      resetForm();
+      setFormDialogOpen(false);
       toast({
         title: 'Success',
-        description: 'News article added successfully',
+        description: 'News article created successfully',
       });
     },
     onError: (error: any) => {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to add news article',
+        description: error.message || 'Failed to create news article',
         variant: 'destructive',
       });
     },
   });
 
-  const updateNewsMutation = useMutation({
-    mutationFn: async ({ id, ...newsData }: Partial<NewsArticle> & { id: string }) => {
-      const updateData = {
-        ...newsData,
-        published_at: newsData.is_published 
-          ? (newsData.published_at || new Date().toISOString())
-          : null
-      };
-      
-      const { error } = await supabase
+  const updateArticleMutation = useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<NewsArticle> & { id: string }) => {
+      const { data, error } = await supabase
         .from('news')
-        .update(updateData)
-        .eq('id', id);
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating news article:', error);
+        throw error;
+      }
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['news'] });
-      setIsDialogOpen(false);
-      setEditingNews(null);
-      resetForm();
+      setFormDialogOpen(false);
       toast({
         title: 'Success',
         description: 'News article updated successfully',
@@ -136,19 +138,21 @@ const NewsManagement = () => {
     },
   });
 
-  const deleteNewsMutation = useMutation({
+  const deleteArticleMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
         .from('news')
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error deleting news article:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['news'] });
       setDeleteDialogOpen(false);
-      setArticleToDelete(null);
       toast({
         title: 'Success',
         description: 'News article deleted successfully',
@@ -163,34 +167,39 @@ const NewsManagement = () => {
     },
   });
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
-    const newsData = {
-      title: formData.title,
-      content: formData.content,
-      excerpt: formData.excerpt || undefined,
-      featured_image_url: formData.featured_image_url || undefined,
-      is_published: formData.is_published,
+    if (!supabase.auth.getSession()) {
+      toast({
+        title: 'Error',
+        description: 'You must be logged in to create or update news articles.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const session = await supabase.auth.getSession();
+    const userId = session.data.session?.user.id;
+
+    const formData = new FormData(e.currentTarget);
+    const title = formData.get('title') as string;
+    const excerpt = formData.get('excerpt') as string;
+    const is_published = formData.get('is_published') === 'on';
+
+    const articleData = {
+      title,
+      excerpt,
+      content,
+      featured_image_url: featuredImage,
+      is_published,
+      author_id: userId,
     };
 
-    if (editingNews) {
-      updateNewsMutation.mutate({ id: editingNews.id, ...newsData });
+    if (editingArticle) {
+      updateArticleMutation.mutate({ id: editingArticle.id, ...articleData });
     } else {
-      addNewsMutation.mutate(newsData);
+      createArticleMutation.mutate(articleData);
     }
-  };
-
-  const handleEdit = (newsArticle: NewsArticle) => {
-    setEditingNews(newsArticle);
-    setFormData({
-      title: newsArticle.title,
-      content: newsArticle.content,
-      excerpt: newsArticle.excerpt || '',
-      featured_image_url: newsArticle.featured_image_url || '',
-      is_published: newsArticle.is_published || false
-    });
-    setIsDialogOpen(true);
   };
 
   const handleDelete = (article: NewsArticle) => {
@@ -200,33 +209,30 @@ const NewsManagement = () => {
 
   const confirmDelete = () => {
     if (articleToDelete) {
-      deleteNewsMutation.mutate(articleToDelete.id);
+      deleteArticleMutation.mutate(articleToDelete.id);
     }
   };
 
-  const resetForm = () => {
-    setFormData({
-      title: '',
-      content: '',
-      excerpt: '',
-      featured_image_url: '',
-      is_published: false
-    });
-    setEditingNews(null);
-    setIsDialogOpen(false);
+  const handleCancel = () => {
+    setFormDialogOpen(false);
+    setEditingArticle(null);
+  };
+
+  const handleImageUpload = (url: string) => {
+    setFeaturedImage(url);
   };
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="inline-block w-8 h-8 border-4 border-rhino-red border-t-transparent rounded-full animate-spin"></div>
-        <p className="ml-3 text-gray-600">Loading news...</p>
+        <p className="ml-3 text-gray-600">Loading news articles...</p>
       </div>
     );
   }
 
-  const publishedNews = news?.filter(n => n.is_published) || [];
-  const draftNews = news?.filter(n => !n.is_published) || [];
+  const publishedArticles = articles?.filter(a => a.is_published) || [];
+  const draftArticles = articles?.filter(a => !a.is_published) || [];
 
   return (
     <div className="space-y-6">
@@ -235,83 +241,78 @@ const NewsManagement = () => {
           <h1 className="text-3xl font-bold text-slate-900">News Management</h1>
           <p className="text-slate-600">Create and manage news articles</p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-gradient-to-r from-rhino-red to-red-700 hover:from-red-700 hover:to-red-800">
+            <Button 
+              className="bg-gradient-to-r from-rhino-red to-red-700 hover:from-red-700 hover:to-red-800"
+              onClick={() => {
+                setEditingArticle(null);
+                setContent('');
+                setFeaturedImage('');
+              }}
+            >
               <Plus className="w-4 h-4 mr-2" />
-              Add News Article
+              Add Article
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{editingArticle ? 'Edit Article' : 'Add Article'}</DialogTitle>
+              <DialogDescription>
+                Create and manage news articles for the website.
+              </DialogDescription>
+            </DialogHeader>
             <form onSubmit={handleSubmit}>
-              <DialogHeader>
-                <DialogTitle>
-                  {editingNews ? 'Edit News Article' : 'Add New News Article'}
-                </DialogTitle>
-                <DialogDescription>
-                  Create engaging news content for your website.
-                </DialogDescription>
-              </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
                   <Label htmlFor="title">Title</Label>
                   <Input
                     id="title"
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    name="title"
+                    defaultValue={editingArticle?.title}
+                    placeholder="Article Title"
                     required
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="excerpt">Excerpt (Optional)</Label>
+                  <Label htmlFor="excerpt">Excerpt</Label>
                   <Textarea
                     id="excerpt"
-                    value={formData.excerpt}
-                    onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
-                    placeholder="Brief summary for article previews..."
-                    rows={2}
+                    name="excerpt"
+                    defaultValue={editingArticle?.excerpt}
+                    placeholder="Brief summary of the article"
+                    rows={3}
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label>Featured Image</Label>
-                  <FileUpload
-                    onUpload={(url) => setFormData({ ...formData, featured_image_url: url })}
-                    accept="image/*"
-                    fileType="image"
-                    existingUrl={formData.featured_image_url}
+                  <Label htmlFor="content">Content</Label>
+                  <RichTextEditor 
+                    value={content}
+                    onChange={setContent}
                   />
                 </div>
                 <div className="grid gap-2">
-                  <RichTextEditor
-                    label="Content"
-                    value={formData.content}
-                    onChange={(content) => setFormData({ ...formData, content })}
-                    placeholder="Write your news article content here..."
-                    required
+                  <Label htmlFor="featured_image">Featured Image</Label>
+                  <FileUpload 
+                    onUpload={handleImageUpload}
+                    initialUrl={featuredImage}
                   />
                 </div>
                 <div className="flex items-center space-x-2">
                   <Switch
                     id="is_published"
-                    checked={formData.is_published}
-                    onCheckedChange={(checked) => setFormData({ ...formData, is_published: checked })}
+                    name="is_published"
+                    defaultChecked={editingArticle?.is_published ?? false}
                   />
-                  <Label htmlFor="is_published">Publish immediately</Label>
+                  <Label htmlFor="is_published">Publish</Label>
                 </div>
               </div>
               <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={resetForm}
-                >
+                <Button type="button" variant="outline" onClick={handleCancel}>
                   Cancel
                 </Button>
-                <Button 
-                  type="submit"
-                  disabled={addNewsMutation.isPending || updateNewsMutation.isPending}
-                >
-                  {editingNews ? 'Update' : 'Add'} Article
+                <Button type="submit">
+                  {editingArticle ? 'Update Article' : 'Create Article'}
                 </Button>
               </DialogFooter>
             </form>
@@ -321,28 +322,28 @@ const NewsManagement = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="border-l-4 border-l-green-500">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">Published Articles</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-green-600">{publishedNews.length}</div>
-          </CardContent>
-        </Card>
-        <Card className="border-l-4 border-l-yellow-500">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">Draft Articles</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-yellow-600">{draftNews.length}</div>
-          </CardContent>
-        </Card>
         <Card className="border-l-4 border-l-blue-500">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-slate-600">Total Articles</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-blue-600">{news?.length || 0}</div>
+            <div className="text-3xl font-bold text-blue-600">{articles?.length || 0}</div>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-green-500">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-slate-600">Published</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-green-600">{publishedArticles.length}</div>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-yellow-500">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-slate-600">Drafts</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-yellow-600">{draftArticles.length}</div>
           </CardContent>
         </Card>
       </div>
@@ -351,45 +352,45 @@ const NewsManagement = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Newspaper className="w-5 h-5" />
-            News Articles
+            All Articles
           </CardTitle>
           <CardDescription>
-            Manage all news articles and blog posts
+            Manage your news articles and publications
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {news && news.length > 0 ? (
+          {articles && articles.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Title</TableHead>
+                  <TableHead>Author</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Published</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {news.map((article) => (
+                {articles.map((article) => (
                   <TableRow key={article.id}>
                     <TableCell>
-                      <div className="flex items-center gap-3">
-                        {article.featured_image_url ? (
-                          <img 
-                            src={article.featured_image_url} 
-                            alt={article.title}
-                            className="w-12 h-12 rounded object-cover"
-                          />
-                        ) : (
-                          <div className="w-12 h-12 bg-slate-200 rounded flex items-center justify-center">
-                            <Newspaper className="w-6 h-6 text-slate-500" />
-                          </div>
+                      <div>
+                        <p className="font-medium text-slate-900">{article.title}</p>
+                        {article.excerpt && (
+                          <p className="text-sm text-slate-500 truncate max-w-xs">{article.excerpt}</p>
                         )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <User className="w-4 h-4 text-slate-400" />
                         <div>
-                          <p className="font-medium text-slate-900">{article.title}</p>
-                          {article.excerpt && (
-                            <p className="text-sm text-slate-500 truncate max-w-xs">{article.excerpt}</p>
-                          )}
+                          <p className="text-sm font-medium text-slate-900">
+                            {article.profiles?.full_name || 'Unknown Author'}
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            {article.profiles?.email}
+                          </p>
                         </div>
                       </div>
                     </TableCell>
@@ -399,17 +400,8 @@ const NewsManagement = () => {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2 text-sm text-slate-600">
-                        <Calendar className="w-4 h-4" />
-                        {article.published_at 
-                          ? format(new Date(article.published_at), 'MMM dd, yyyy')
-                          : 'Not published'
-                        }
-                      </div>
-                    </TableCell>
-                    <TableCell>
                       <span className="text-sm text-slate-600">
-                        {format(new Date(article.created_at), 'MMM dd, yyyy')}
+                        {article.created_at ? format(new Date(article.created_at), 'MMM dd, yyyy') : 'N/A'}
                       </span>
                     </TableCell>
                     <TableCell>
@@ -417,14 +409,22 @@ const NewsManagement = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleEdit(article)}
+                          onClick={() => {
+                            setEditingArticle(article);
+                            setContent(article.content);
+                            setFeaturedImage(article.featured_image_url || '');
+                            setFormDialogOpen(true);
+                          }}
                         >
                           <Edit className="w-4 h-4" />
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleDelete(article)}
+                          onClick={() => {
+                            setArticleToDelete(article);
+                            setDeleteDialogOpen(true);
+                          }}
                           className="text-red-600 hover:text-red-700"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -438,7 +438,7 @@ const NewsManagement = () => {
           ) : (
             <div className="text-center py-12">
               <Newspaper className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-slate-900 mb-2">No news articles</h3>
+              <h3 className="text-lg font-medium text-slate-900 mb-2">No articles</h3>
               <p className="text-slate-600">Create your first news article to get started.</p>
             </div>
           )}
@@ -449,10 +449,14 @@ const NewsManagement = () => {
       <CustomDeleteDialog
         isOpen={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
-        onConfirm={confirmDelete}
+        onConfirm={() => {
+          if (articleToDelete) {
+            deleteArticleMutation.mutate(articleToDelete.id);
+          }
+        }}
         itemName={articleToDelete?.title || ''}
         itemType="News Article"
-        isLoading={deleteNewsMutation.isPending}
+        isLoading={deleteArticleMutation.isPending}
         description={`Are you sure you want to delete "${articleToDelete?.title}"? This action cannot be undone.`}
       />
     </div>

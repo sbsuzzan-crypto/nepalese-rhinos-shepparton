@@ -14,6 +14,11 @@ interface Player {
   jersey_number: number | null;
   bio: string | null;
   photo_url: string | null;
+  team_id: string | null;
+  teams?: {
+    name: string;
+    category: string | null;
+  } | null;
 }
 
 interface Staff {
@@ -28,10 +33,16 @@ const Teams = () => {
   const { data: players, isLoading: playersLoading } = useQuery({
     queryKey: ['players'],
     queryFn: async () => {
-      console.log('Fetching players from Supabase...');
+      console.log('Fetching players with team information...');
       const { data, error } = await supabase
         .from('players')
-        .select('*')
+        .select(`
+          *,
+          teams (
+            name,
+            category
+          )
+        `)
         .eq('is_active', true)
         .order('jersey_number', { ascending: true });
       
@@ -167,9 +178,16 @@ const Teams = () => {
                         )}
                       </div>
                       <h4 className="font-bold text-lg text-rhino-blue mb-2">{player.name}</h4>
-                      <Badge className={`${getPositionBadgeColor(player.position)} text-white mb-2`}>
-                        {player.position}
-                      </Badge>
+                      <div className="space-y-2 mb-2">
+                        <Badge className={`${getPositionBadgeColor(player.position)} text-white`}>
+                          {player.position}
+                        </Badge>
+                        {player.teams && (
+                          <Badge variant="outline" className="ml-2">
+                            {player.teams.name}
+                          </Badge>
+                        )}
+                      </div>
                       {player.bio && (
                         <p className="text-sm text-rhino-gray">{player.bio}</p>
                       )}
