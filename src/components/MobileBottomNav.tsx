@@ -1,25 +1,40 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Users, Calendar, Camera, UserPlus, Mail, MoreHorizontal, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Home, Users, Calendar, Image, Phone } from "lucide-react";
 
 const MobileBottomNav = () => {
-  const [showMore, setShowMore] = useState(false);
   const location = useLocation();
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
 
-  const primaryNavItems = [
+  const navigation = [
     { name: "Home", href: "/", icon: Home },
-    { name: "About", href: "/about", icon: Users },
     { name: "Teams", href: "/teams", icon: Users },
     { name: "Fixtures", href: "/fixtures", icon: Calendar },
+    { name: "Gallery", href: "/gallery", icon: Image },
+    { name: "Contact", href: "/contact", icon: Phone },
   ];
 
-  const moreNavItems = [
-    { name: "Gallery", href: "/gallery", icon: Camera },
-    { name: "Join Us", href: "/join-us", icon: UserPlus },
-    { name: "Contact", href: "/contact", icon: Mail },
-  ];
+  useEffect(() => {
+    const controlNavbar = () => {
+      if (typeof window !== 'undefined') {
+        if (window.scrollY > lastScrollY && window.scrollY > 100) {
+          setIsVisible(false);
+        } else {
+          setIsVisible(true);
+        }
+        setLastScrollY(window.scrollY);
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('scroll', controlNavbar);
+      return () => {
+        window.removeEventListener('scroll', controlNavbar);
+      };
+    }
+  }, [lastScrollY]);
 
   const isActive = (href: string) => {
     if (href === "/" && location.pathname === "/") return true;
@@ -27,93 +42,70 @@ const MobileBottomNav = () => {
     return false;
   };
 
-  const handleMoreClick = () => {
-    setShowMore(!showMore);
-  };
-
-  const handleItemClick = () => {
-    setShowMore(false);
-  };
-
   return (
-    <>
-      {/* Bottom Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 shadow-lg">
-        <div className="flex items-center justify-around px-2 py-2">
-          {primaryNavItems.map((item) => {
-            const Icon = item.icon;
+    <nav className={`
+      md:hidden fixed bottom-0 left-0 right-0 z-50 
+      bg-white/95 backdrop-blur-lg border-t border-slate-200/50 
+      shadow-lg transition-all duration-300 ease-in-out
+      ${isVisible ? 'translate-y-0' : 'translate-y-full'}
+    `}>
+      <div className="px-2 py-1">
+        <div className="flex justify-around items-center">
+          {navigation.map((item) => {
+            const active = isActive(item.href);
             return (
               <Link
                 key={item.name}
                 to={item.href}
-                onClick={handleItemClick}
-                className={`flex flex-col items-center py-2 px-3 rounded-lg transition-all duration-200 ${
-                  isActive(item.href)
-                    ? "text-rhino-red bg-rhino-red/10"
-                    : "text-rhino-gray hover:text-rhino-blue hover:bg-gray-100"
-                }`}
+                className={`
+                  relative flex flex-col items-center justify-center 
+                  min-h-[60px] min-w-[60px] px-2 py-1 rounded-xl
+                  transition-all duration-200 ease-out
+                  active:scale-95 touch-manipulation
+                  ${active 
+                    ? 'text-rhino-red scale-105' 
+                    : 'text-slate-600 hover:text-rhino-red hover:scale-105'
+                  }
+                `}
               >
-                <Icon size={20} />
-                <span className="text-xs mt-1 font-medium">{item.name}</span>
+                {/* Active indicator */}
+                {active && (
+                  <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-rhino-red rounded-full animate-pulse" />
+                )}
+                
+                {/* Icon with bounce animation */}
+                <div className={`
+                  p-1.5 rounded-lg transition-all duration-200
+                  ${active ? 'bg-rhino-red/10 animate-pulse' : 'hover:bg-slate-100'}
+                `}>
+                  <item.icon className={`w-5 h-5 transition-transform duration-200 ${active ? 'scale-110' : ''}`} />
+                </div>
+                
+                {/* Label */}
+                <span className={`
+                  text-xs font-medium mt-0.5 transition-all duration-200
+                  ${active ? 'text-rhino-red scale-105' : 'text-slate-600'}
+                `}>
+                  {item.name}
+                </span>
+                
+                {/* Ripple effect */}
+                <div className="absolute inset-0 rounded-xl overflow-hidden">
+                  <div className={`
+                    absolute inset-0 bg-rhino-red/5 rounded-xl 
+                    transform scale-0 transition-transform duration-300
+                    ${active ? 'scale-100' : ''}
+                  `} />
+                </div>
               </Link>
             );
           })}
-          
-          {/* More Button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleMoreClick}
-            className={`flex flex-col items-center py-2 px-3 h-auto transition-all duration-200 ${
-              showMore
-                ? "text-rhino-red bg-rhino-red/10"
-                : "text-rhino-gray hover:text-rhino-blue hover:bg-gray-100"
-            }`}
-          >
-            {showMore ? <X size={20} /> : <MoreHorizontal size={20} />}
-            <span className="text-xs mt-1 font-medium">More</span>
-          </Button>
         </div>
-      </nav>
-
-      {/* Expandable More Menu */}
-      {showMore && (
-        <>
-          {/* Backdrop */}
-          <div 
-            className="md:hidden fixed inset-0 bg-black/50 z-40 animate-in fade-in duration-200"
-            onClick={() => setShowMore(false)}
-          />
-          
-          {/* More Menu */}
-          <div className="md:hidden fixed bottom-16 left-4 right-4 bg-white rounded-lg shadow-xl border z-50 animate-in slide-in-from-bottom-2 duration-300">
-            <div className="p-4">
-              <h3 className="text-lg font-semibold text-rhino-blue mb-3">More Options</h3>
-              <div className="space-y-1">
-                {moreNavItems.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <Link
-                      key={item.name}
-                      to={item.href}
-                      onClick={handleItemClick}
-                      className={`flex items-center space-x-3 p-3 rounded-lg transition-all duration-200 ${
-                        isActive(item.href)
-                          ? "text-rhino-red bg-rhino-red/10"
-                          : "text-rhino-blue hover:bg-gray-100"
-                      }`}
-                    >
-                      <Icon size={20} />
-                      <span className="font-medium">{item.name}</span>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </>
-      )}
-    </>
+      </div>
+      
+      {/* Safe area padding for iOS */}
+      <div className="h-safe-area-inset-bottom bg-white/95" />
+    </nav>
   );
 };
 

@@ -1,74 +1,133 @@
 
-import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, User, ChevronRight, Tag } from "lucide-react";
+import { Calendar, Clock, Eye } from "lucide-react";
 import { Link } from "react-router-dom";
-import { NewsArticle } from "@/types";
-import { formatDate, truncateText, getReadingTime, stripHtml } from "@/utils/formatters";
+import { formatDate, formatRelativeTime, getReadingTime, stripHtml, truncateText } from "@/utils/formatters";
 
 interface NewsCardProps {
-  article: NewsArticle;
-  featured?: boolean;
+  article: {
+    id: string;
+    title: string;
+    content: string;
+    excerpt?: string;
+    featured_image_url?: string;
+    created_at: string;
+    updated_at?: string;
+    is_published?: boolean;
+    news_categories?: {
+      id: string;
+      name: string;
+      color: string;
+    };
+  };
+  variant?: 'default' | 'featured' | 'compact';
 }
 
-const NewsCard: React.FC<NewsCardProps> = ({ article, featured = false }) => {
+const NewsCard = ({ article, variant = 'default' }: NewsCardProps) => {
+  const readingTime = getReadingTime(article.content);
+  const excerpt = article.excerpt || truncateText(stripHtml(article.content), 120);
+  const isFeatured = variant === 'featured';
+  const isCompact = variant === 'compact';
+
   return (
-    <Card className={`overflow-hidden hover:shadow-xl transition-all duration-300 group border-0 shadow-lg bg-white ${featured ? 'lg:col-span-2' : ''}`}>
-      {article.featured_image_url && (
-        <div className={`overflow-hidden ${featured ? 'aspect-[2/1]' : 'aspect-video'}`}>
-          <img
-            src={article.featured_image_url}
-            alt={article.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          />
-        </div>
-      )}
-      <CardContent className="p-6">
-        {/* Category Badge */}
-        {article.news_categories && (
-          <Badge 
-            className="text-white font-medium mb-3"
-            style={{ backgroundColor: article.news_categories.color }}
-          >
-            <Tag className="h-3 w-3 mr-1" />
-            {article.news_categories.name}
-          </Badge>
+    <Card className="group overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] touch-manipulation">
+      <Link to={`/news/${article.id}`} className="block">
+        {/* Featured Image */}
+        {article.featured_image_url && (
+          <div className={`relative overflow-hidden ${isFeatured ? 'h-48 sm:h-64' : isCompact ? 'h-32 sm:h-40' : 'h-40 sm:h-48'}`}>
+            <img
+              src={article.featured_image_url}
+              alt={article.title}
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              loading="lazy"
+            />
+            
+            {/* Gradient Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+            
+            {/* Category Badge */}
+            {article.news_categories && (
+              <div className="absolute top-3 left-3">
+                <Badge 
+                  className="text-white border-white/20 text-xs font-medium"
+                  style={{ 
+                    backgroundColor: article.news_categories.color || '#3B82F6',
+                    color: 'white'
+                  }}
+                >
+                  {article.news_categories.name}
+                </Badge>
+              </div>
+            )}
+
+            {/* Reading Time */}
+            <div className="absolute top-3 right-3">
+              <div className="flex items-center gap-1 bg-black/50 backdrop-blur-sm rounded-full px-2 py-1 text-white text-xs">
+                <Clock className="w-3 h-3" />
+                <span>{readingTime} min</span>
+              </div>
+            </div>
+          </div>
         )}
 
-        {/* Article Meta */}
-        <div className="flex items-center gap-4 text-sm text-rhino-gray mb-3">
-          <div className="flex items-center gap-1">
-            <Calendar className="h-4 w-4" />
-            <span>{formatDate(article.created_at)}</span>
+        <CardContent className={`p-4 sm:p-6 ${isCompact ? 'p-3 sm:p-4' : ''}`}>
+          {/* Category (if no image) */}
+          {!article.featured_image_url && article.news_categories && (
+            <div className="mb-3">
+              <Badge 
+                className="text-xs font-medium"
+                style={{ 
+                  backgroundColor: `${article.news_categories.color}20`,
+                  color: article.news_categories.color || '#3B82F6',
+                  border: `1px solid ${article.news_categories.color}30`
+                }}
+              >
+                {article.news_categories.name}
+              </Badge>
+            </div>
+          )}
+
+          {/* Title */}
+          <h3 className={`font-bold text-rhino-blue group-hover:text-rhino-red transition-colors duration-200 line-clamp-2 mb-2 sm:mb-3 ${
+            isFeatured ? 'text-xl sm:text-2xl' : isCompact ? 'text-sm sm:text-base' : 'text-base sm:text-lg'
+          }`}>
+            {article.title}
+          </h3>
+
+          {/* Excerpt */}
+          {!isCompact && (
+            <p className={`text-slate-600 line-clamp-3 mb-3 sm:mb-4 ${
+              isFeatured ? 'text-base' : 'text-sm'
+            }`}>
+              {excerpt}
+            </p>
+          )}
+
+          {/* Meta Information */}
+          <div className="flex items-center justify-between text-xs text-slate-500">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1">
+                <Calendar className="w-3 h-3" />
+                <span className="hidden sm:inline">{formatDate(article.created_at)}</span>
+                <span className="sm:hidden">{formatRelativeTime(article.created_at)}</span>
+              </div>
+              
+              {!isCompact && (
+                <div className="flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  <span>{readingTime} min read</span>
+                </div>
+              )}
+            </div>
+
+            {/* Read More Arrow */}
+            <div className="text-rhino-red group-hover:translate-x-1 transition-transform duration-200">
+              →
+            </div>
           </div>
-          <div className="flex items-center gap-1">
-            <User className="h-4 w-4" />
-            <span>Admin</span>
-          </div>
-        </div>
-        
-        <h3 className={`font-bold text-rhino-blue mb-3 line-clamp-2 group-hover:text-rhino-red transition-colors ${featured ? 'text-2xl' : 'text-xl'}`}>
-          {article.title}
-        </h3>
-        
-        <p className={`text-rhino-gray mb-4 line-clamp-3 leading-relaxed ${featured ? 'text-lg' : ''}`}>
-          {article.excerpt || truncateText(stripHtml(article.content), featured ? 200 : 150)}
-        </p>
-        
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-rhino-gray">
-            {getReadingTime(article.content)} min read
-          </span>
-          <Link 
-            to={`/news/${article.id}`}
-            className="inline-flex items-center gap-2 text-rhino-red hover:text-red-700 font-semibold transition-colors"
-          >
-            Read More
-            <ChevronRight className="h-4 w-4" />
-          </Link>
-        </div>
-      </CardContent>
+        </CardContent>
+      </Link>
     </Card>
   );
 };
